@@ -259,7 +259,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: light.smart_led_light
-                    brightness_step: 26
+                    brightness_step: "26"
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 2;'
@@ -268,7 +268,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: light.office
-                    brightness_step: 26
+                    brightness_step: "26"
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 3;'
@@ -277,7 +277,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: light.kitchen
-                    brightness_step: 26
+                    brightness_step: "26"
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 4;'
@@ -286,7 +286,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: light.living_room
-                    brightness_step: 26
+                    brightness_step: "26"
         # Climate control
         - if:
             condition:
@@ -329,7 +329,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: light.smart_led_light
-                    brightness_step: -26
+                    brightness_step: "-26"
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 2;'
@@ -338,7 +338,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: light.office
-                    brightness_step: -26
+                    brightness_step: "-26"
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 3;'
@@ -347,7 +347,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: light.kitchen
-                    brightness_step: -26
+                    brightness_step: "-26"
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 4;'
@@ -356,7 +356,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: light.living_room
-                    brightness_step: -26
+                    brightness_step: "-26"
         # Climate control
         - if:
             condition:
