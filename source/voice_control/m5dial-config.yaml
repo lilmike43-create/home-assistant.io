@@ -1,52 +1,62 @@
-# M5Dial Complete Configuration for Home Assistant Control
-# This configuration creates a multi-mode controller for:
-# - Light brightness control
-# - Media player volume control
-# - Climate/thermostat temperature control
-#
-# Press the center button to cycle through modes
-# Rotate the dial to adjust values
-# The display shows the current mode and value with visual feedback
+################################################################################################################
+# M5Stack Dial - Home Assistant Multi-Function Controller
+# Based on working M5Dial configuration with proven display settings
+################################################################################################################
 
 substitutions:
+  # Device customization
   device_name: m5dial-controller
   friendly_name: M5Dial Controller
 
-  # Replace these with your actual entity IDs
+  # Home Assistant entities to control
   light_entity: "light.living_room"
   media_player_entity: "media_player.living_room_speaker"
   climate_entity: "climate.living_room"
 
+  # Display colors
+  background_color: '000000'
+  primary_color: '00A8E8'
+  secondary_color: 'FFFFFF'
+
+  # Sounds
+  menu_sound: 'beep:d=64,o=5,b=255:c7'
+  success_sound: 'success:d=24,o=5,b=100:c,g,b'
+
+################################################################################################################
+
 esphome:
   name: ${device_name}
   friendly_name: ${friendly_name}
+  on_boot:
+    then:
+      - light.turn_on:
+          id: backlight
+          brightness: 100%
+      - display.page.show: home_page
   platformio_options:
     board_build.flash_mode: dio
-  on_boot:
-    priority: 600
-    then:
-      # Initialize with a nice startup animation
-      - light.turn_on:
-          id: dial_light
-          red: 100%
-          green: 0%
-          blue: 100%
-          brightness: 50%
-          effect: "Rainbow"
-      - delay: 2s
-      - light.turn_off: dial_light
-      - component.update: dial_display
 
 esp32:
   board: esp32-s3-devkitc-1
+  flash_size: 8MB
   framework:
-    type: arduino
+    type: esp-idf
 
-# Enable logging
-logger:
-  level: INFO
+###################
+# NETWORK
+###################
 
-# Enable Home Assistant API
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot if WiFi connection fails
+  ap:
+    ssid: "${friendly_name} Fallback"
+    password: "m5dial123"
+
+captive_portal:
+
 api:
   encryption:
     key: !secret api_encryption_key
@@ -55,416 +65,320 @@ ota:
   - platform: esphome
     password: !secret ota_password
 
-# WiFi configuration with fallback AP and Improv support
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+logger:
 
-  # Enable fallback hotspot when WiFi fails
-  ap:
-    ssid: "${friendly_name} Setup"
-    password: "m5dial123"
+###################
+# HARDWARE
+###################
 
-  # Callbacks for WiFi events
-  on_connect:
-    - lambda: |-
-        ESP_LOGI("wifi", "Connected to WiFi!");
-    - light.turn_on:
-        id: dial_light
-        red: 0%
-        green: 100%
-        blue: 0%
-        brightness: 50%
-    - delay: 1s
-    - light.turn_off: dial_light
-    - component.update: dial_display
-
-  on_disconnect:
-    - lambda: |-
-        ESP_LOGI("wifi", "Disconnected from WiFi!");
-    - light.turn_on:
-        id: dial_light
-        red: 100%
-        green: 0%
-        blue: 0%
-        brightness: 50%
-        effect: "Pulse"
-    - component.update: dial_display
-
-# Captive portal for easy WiFi setup
-captive_portal:
-
-# Improv Serial - allows WiFi setup via web browser USB connection
-improv_serial:
-
-# I2C Bus for touchscreen
+# I2C Bus for touchscreen and RTC
 i2c:
-  sda: GPIO11
-  scl: GPIO12
-  scan: true
+  - id: internal_i2c
+    sda: GPIO11
+    scl: GPIO12
+    scan: false
 
 # SPI Bus for display
 spi:
-  clk_pin: GPIO6
+  id: spi_bus
   mosi_pin: GPIO5
+  clk_pin: GPIO6
+
+# Touchscreen
+touchscreen:
+  - platform: ft5x06
+    id: touchscreen_dial
+    i2c_id: internal_i2c
+    address: 0x38
+
+# RTC (Real-Time Clock)
+time:
+  - platform: pcf8563
+    id: rtctime
+    i2c_id: internal_i2c
+    address: 0x51
+    update_interval: never
+
+  - platform: homeassistant
+    id: esptime
+    on_time_sync:
+      then:
+        - pcf8563.write_time:
 
 ###################
-# GLOBAL VARIABLES
+# OUTPUTS
+###################
+
+output:
+  # Buzzer for sound feedback
+  - platform: ledc
+    pin: GPIO3
+    id: buzzer
+
+  # Backlight PWM control
+  - platform: ledc
+    pin: GPIO9
+    id: backlight_pwm
+
+###################
+# LIGHTS
+###################
+
+light:
+  - platform: monochromatic
+    name: "Backlight"
+    output: backlight_pwm
+    id: backlight
+    default_transition_length: 0s
+    restore_mode: ALWAYS_ON
+    internal: true
+
+###################
+# SOUND
+###################
+
+rtttl:
+  output: buzzer
+
+###################
+# GLOBALS
 ###################
 
 globals:
-  # 0 = Light, 1 = Volume, 2 = Climate
+  # Current control mode: 0=home, 1=light, 2=media, 3=climate
   - id: control_mode
     type: int
-    restore_value: yes
+    restore_value: false
     initial_value: '0'
 
-  # For smooth animations
-  - id: display_brightness
-    type: float
-    restore_value: no
+  # Inactivity timer for screen saver
+  - id: inactivity_time
+    type: int
+    restore_value: false
     initial_value: '0'
-
-  # WiFi setup mode flag
-  - id: wifi_setup_mode
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-
-###################
-# NUMBERS (Control Values)
-###################
-
-number:
-  # Light brightness control
-  - platform: template
-    name: "Light Brightness"
-    id: light_brightness
-    min_value: 0
-    max_value: 100
-    step: 1
-    optimistic: true
-    initial_value: 50
-    on_value:
-      then:
-        - if:
-            condition:
-              lambda: 'return x > 0;'
-            then:
-              - homeassistant.service:
-                  service: light.turn_on
-                  data:
-                    entity_id: ${light_entity}
-                    brightness_pct: !lambda 'return x;'
-            else:
-              - homeassistant.service:
-                  service: light.turn_off
-                  data:
-                    entity_id: ${light_entity}
-
-  # Media player volume control
-  - platform: template
-    name: "Media Volume"
-    id: media_volume
-    min_value: 0
-    max_value: 100
-    step: 2
-    optimistic: true
-    initial_value: 30
-    on_value:
-      then:
-        - homeassistant.service:
-            service: media_player.volume_set
-            data:
-              entity_id: ${media_player_entity}
-              volume_level: !lambda 'return x / 100.0;'
-
-  # Climate temperature control
-  - platform: template
-    name: "Thermostat Temperature"
-    id: thermostat_temp
-    min_value: 15
-    max_value: 30
-    step: 0.5
-    optimistic: true
-    initial_value: 21
-    unit_of_measurement: "°C"
-    on_value:
-      then:
-        - homeassistant.service:
-            service: climate.set_temperature
-            data:
-              entity_id: ${climate_entity}
-              temperature: !lambda 'return x;'
 
 ###################
 # SENSORS
 ###################
 
 sensor:
-  # Rotary Encoder
+  # Rotary encoder for value control
   - platform: rotary_encoder
-    name: "Dial Encoder"
-    id: dial_encoder
-    pin_a:
-      number: GPIO40
-      mode:
-        input: true
-        pullup: true
-    pin_b:
-      number: GPIO41
-      mode:
-        input: true
-        pullup: true
-    resolution: 2
+    id: encoder
+    pin_a: GPIO40
+    pin_b: GPIO41
     on_clockwise:
       then:
+        - rtttl.play: ${menu_sound}
         - lambda: |-
-            // Increment based on current mode
+            id(inactivity_time) = 0;
+
+            // On home page, cycle through modes
             if (id(control_mode) == 0) {
-              auto call = id(light_brightness).make_call();
-              call.number_increment(false);
-              call.perform();
-            } else if (id(control_mode) == 1) {
-              auto call = id(media_volume).make_call();
-              call.number_increment(false);
-              call.perform();
-            } else if (id(control_mode) == 2) {
-              auto call = id(thermostat_temp).make_call();
-              call.number_increment(false);
+              if (id(control_mode) == 0) {
+                id(control_mode) = 1;
+              }
+            }
+            // In control mode, adjust values
+            else if (id(control_mode) == 1) {
+              // Light brightness +10%
+              auto call = id(homeassistant::global_homeassistant_service).make_service_call("light", "turn_on");
+              call.add_data("entity_id", "${light_entity}");
+              call.add_data("brightness_step_pct", "10");
               call.perform();
             }
-        - light.turn_on:
-            id: dial_light
-            red: 0%
-            green: 100%
-            blue: 0%
-            brightness: 30%
-        - delay: 100ms
-        - light.turn_off: dial_light
-        - component.update: dial_display
+            else if (id(control_mode) == 2) {
+              // Media volume +5%
+              auto call = id(homeassistant::global_homeassistant_service).make_service_call("media_player", "volume_set");
+              call.add_data("entity_id", "${media_player_entity}");
+              call.add_data_template("volume_level", "{{ (state_attr('${media_player_entity}', 'volume_level') | float + 0.05) }}");
+              call.perform();
+            }
+            else if (id(control_mode) == 3) {
+              // Climate temperature +1°C
+              auto call = id(homeassistant::global_homeassistant_service).make_service_call("climate", "set_temperature");
+              call.add_data("entity_id", "${climate_entity}");
+              call.add_data_template("temperature", "{{ (state_attr('${climate_entity}', 'temperature') | float + 1.0) }}");
+              call.perform();
+            }
 
     on_anticlockwise:
       then:
+        - rtttl.play: ${menu_sound}
         - lambda: |-
-            // Decrement based on current mode
+            id(inactivity_time) = 0;
+
+            // On home page, cycle through modes (reverse)
             if (id(control_mode) == 0) {
-              auto call = id(light_brightness).make_call();
-              call.number_decrement(false);
-              call.perform();
-            } else if (id(control_mode) == 1) {
-              auto call = id(media_volume).make_call();
-              call.number_decrement(false);
-              call.perform();
-            } else if (id(control_mode) == 2) {
-              auto call = id(thermostat_temp).make_call();
-              call.number_decrement(false);
+              id(control_mode) = 1;
+            }
+            // In control mode, decrease values
+            else if (id(control_mode) == 1) {
+              // Light brightness -10%
+              auto call = id(homeassistant::global_homeassistant_service).make_service_call("light", "turn_on");
+              call.add_data("entity_id", "${light_entity}");
+              call.add_data("brightness_step_pct", "-10");
               call.perform();
             }
-        - light.turn_on:
-            id: dial_light
-            red: 100%
-            green: 50%
-            blue: 0%
-            brightness: 30%
-        - delay: 100ms
-        - light.turn_off: dial_light
-        - component.update: dial_display
+            else if (id(control_mode) == 2) {
+              // Media volume -5%
+              auto call = id(homeassistant::global_homeassistant_service).make_service_call("media_player", "volume_set");
+              call.add_data("entity_id", "${media_player_entity}");
+              call.add_data_template("volume_level", "{{ (state_attr('${media_player_entity}', 'volume_level') | float - 0.05) }}");
+              call.perform();
+            }
+            else if (id(control_mode) == 3) {
+              // Climate temperature -1°C
+              auto call = id(homeassistant::global_homeassistant_service).make_service_call("climate", "set_temperature");
+              call.add_data("entity_id", "${climate_entity}");
+              call.add_data_template("temperature", "{{ (state_attr('${climate_entity}', 'temperature') | float - 1.0) }}");
+              call.perform();
+            }
 
-  # Get current temperature from climate entity
+  # Home Assistant sensors for entity states
   - platform: homeassistant
-    name: "Current Temperature"
-    id: current_temp
-    entity_id: ${climate_entity}
-    attribute: current_temperature
-    unit_of_measurement: "°C"
+    id: light_brightness
+    entity_id: ${light_entity}
+    attribute: brightness
+    internal: true
+    filters:
+      - lambda: |-
+          if (isnan(x)) { return 0; }
+          else { return x; }
 
-  # WiFi Signal Strength
-  - platform: wifi_signal
-    name: "WiFi Signal"
-    id: wifi_signal_strength
-    update_interval: 60s
+  - platform: homeassistant
+    id: media_volume
+    entity_id: ${media_player_entity}
+    attribute: volume_level
+    internal: true
+    filters:
+      - lambda: |-
+          if (isnan(x)) { return 0; }
+          else { return x; }
+
+  - platform: homeassistant
+    id: climate_temperature
+    entity_id: ${climate_entity}
+    attribute: temperature
+    internal: true
+    filters:
+      - lambda: |-
+          if (isnan(x)) { return 20; }
+          else { return x; }
+
+###################
+# TEXT SENSORS
+###################
+
+text_sensor:
+  # Entity states
+  - platform: homeassistant
+    id: light_state
+    entity_id: ${light_entity}
+    internal: true
+
+  - platform: homeassistant
+    id: media_state
+    entity_id: ${media_player_entity}
+    internal: true
+
+  - platform: homeassistant
+    id: climate_state
+    entity_id: ${climate_entity}
+    internal: true
+
+  # WiFi connection status
+  - platform: wifi_info
+    ip_address:
+      id: wifi_ip
+      internal: true
 
 ###################
 # BINARY SENSORS
 ###################
 
 binary_sensor:
-  # Center button (encoder push button)
+  # Front button (center push button)
   - platform: gpio
-    name: "Dial Button"
-    id: dial_button
+    name: "Front Button"
+    id: front_button
     pin:
       number: GPIO42
-      mode:
-        input: true
-        pullup: true
       inverted: true
+    internal: true
     on_press:
       then:
-        # Exit WiFi setup mode if active
-        - if:
-            condition:
-              lambda: 'return id(wifi_setup_mode);'
-            then:
-              - lambda: |-
-                  id(wifi_setup_mode) = false;
-                  ESP_LOGI("wifi_setup", "Exited WiFi setup mode");
-              - component.update: dial_display
-            else:
-              # Normal mode: Cycle through control modes
-              - lambda: |-
-                  id(control_mode) = (id(control_mode) + 1) % 3;
-                  ESP_LOGI("mode", "Switched to mode %d", id(control_mode));
-              - component.update: dial_display
-              # Flash LED white to indicate mode change
-              - light.turn_on:
-                  id: dial_light
-                  brightness: 100%
-                  red: 100%
-                  green: 100%
-                  blue: 100%
-              - delay: 200ms
-              - light.turn_off: dial_light
-
-    on_click:
-      # Long press (3 seconds) = Enter WiFi setup mode
-      min_length: 3000ms
-      max_length: 10000ms
-      then:
+        - rtttl.play: ${menu_sound}
         - lambda: |-
-            id(wifi_setup_mode) = true;
-            ESP_LOGI("wifi_setup", "Entered WiFi setup mode - connect to fallback AP");
-        - light.turn_on:
-            id: dial_light
-            brightness: 100%
-            red: 0%
-            green: 0%
-            blue: 100%
-            effect: "Pulse"
-        - component.update: dial_display
+            id(inactivity_time) = 0;
 
-  # WiFi connection status
-  - platform: template
-    name: "WiFi Connected"
-    id: wifi_connected
-    lambda: |-
-      return wifi::global_wifi_component->is_connected();
+            // Cycle through modes: 0 -> 1 -> 2 -> 3 -> 0
+            id(control_mode) = (id(control_mode) + 1) % 4;
 
-###################
-# BUTTONS (Actions from Home Assistant)
-###################
-
-button:
-  # Button to enter WiFi setup mode from Home Assistant
-  - platform: template
-    name: "Enter WiFi Setup Mode"
-    id: wifi_setup_button
-    on_press:
-      then:
-        - lambda: |-
-            id(wifi_setup_mode) = true;
-            ESP_LOGI("wifi_setup", "WiFi setup mode activated via button");
-        - light.turn_on:
-            id: dial_light
-            brightness: 100%
-            red: 0%
-            green: 0%
-            blue: 100%
-            effect: "Pulse"
-        - component.update: dial_display
-
-  # Button to restart the device
-  - platform: restart
-    name: "Restart M5Dial"
-
-###################
-# TOUCHSCREEN
-###################
-
-touchscreen:
-  - platform: ft63x6
-    id: my_touchscreen
-    interrupt_pin: GPIO9
-    on_touch:
-      - lambda: |-
-          ESP_LOGD("touch", "Touch at x=%d, y=%d", touch.x, touch.y);
-
-          // Calculate distance from center
-          int center_x = 120;
-          int center_y = 120;
-          int dx = touch.x - center_x;
-          int dy = touch.y - center_y;
-          int distance = sqrt(dx*dx + dy*dy);
-
-          // If in WiFi setup mode, any touch exits
-          if (id(wifi_setup_mode)) {
-            id(wifi_setup_mode) = false;
-            id(dial_display)->update();
-            return;
-          }
-
-          // Bottom area touch (WiFi indicator area) = enter WiFi setup
-          if (touch.y > 200) {
-            id(wifi_setup_mode) = true;
-            auto call = id(dial_light).turn_on();
-            call.set_brightness(1.0);
-            call.set_rgb(0.0, 0.0, 1.0);
-            call.set_effect("Pulse");
-            call.perform();
-            id(dial_display)->update();
-            return;
-          }
-
-          // Center touch = cycle modes
-          if (distance < 50) {
-            id(control_mode) = (id(control_mode) + 1) % 3;
-            id(dial_display)->update();
-          }
-
-          // Outer ring touch = set value based on angle
-          else if (distance > 70 && distance < 115) {
-            float angle = atan2(dy, dx);
-            // Convert angle to 0-100 range
-            int percent = (int)(((angle + 3.14159) / (2 * 3.14159)) * 100);
-
+            // If we're on mode 0, show home page, otherwise control page
             if (id(control_mode) == 0) {
-              id(light_brightness).publish_state(percent);
-            } else if (id(control_mode) == 1) {
-              id(media_volume).publish_state(percent);
-            } else if (id(control_mode) == 2) {
-              float temp = 15 + (percent / 100.0) * 15;  // 15-30°C range
-              id(thermostat_temp).publish_state(temp);
+              id(dial_display).show_page(id(home_page));
+            } else {
+              id(dial_display).show_page(id(control_page));
             }
-            id(dial_display)->update();
+
+  # Touchscreen buttons
+  - platform: touchscreen
+    name: "Home Button"
+    internal: true
+    x_min: 70
+    x_max: 170
+    y_min: 0
+    y_max: 60
+    on_press:
+      - rtttl.play: ${menu_sound}
+      - lambda: |-
+          id(control_mode) = 0;
+          id(dial_display).show_page(id(home_page));
+          id(inactivity_time) = 0;
+
+###################
+# INTERVALS
+###################
+
+interval:
+  # Inactivity timer
+  - interval: 1s
+    then:
+      - lambda: |-
+          id(inactivity_time) += 1;
+
+          // Dim backlight after 30 seconds of inactivity
+          if (id(inactivity_time) == 30) {
+            auto call = id(backlight).turn_on();
+            call.set_brightness(0.3);
+            call.perform();
+          }
+
+          // Return to home after 60 seconds
+          if (id(inactivity_time) == 60) {
+            id(control_mode) = 0;
+            id(dial_display).show_page(id(home_page));
+            auto call = id(backlight).turn_on();
+            call.set_brightness(1.0);
+            call.perform();
           }
 
 ###################
-# RGB LED
+# COLORS
 ###################
 
-light:
-  - platform: esp32_rmt_led_strip
-    id: dial_light
-    name: "Dial LED"
-    rgb_order: GRB
-    pin: GPIO21
-    num_leds: 1
-    chipset: WS2812
-    default_transition_length: 0s
-    effects:
-      - pulse:
-          name: "Pulse"
-          transition_length: 1s
-          update_interval: 1s
-      - random:
-          name: "Random"
-          transition_length: 5s
-          update_interval: 3s
-      - addressable_rainbow:
-          name: "Rainbow"
-          speed: 10
-          width: 50
+color:
+  - id: color_background
+    hex: ${background_color}
+  - id: color_primary
+    hex: ${primary_color}
+  - id: color_secondary
+    hex: ${secondary_color}
+  - id: color_on
+    hex: '00FF00'
+  - id: color_off
+    hex: 'FF0000'
 
 ###################
 # FONTS
@@ -473,23 +387,23 @@ light:
 font:
   - file: "gfonts://Roboto"
     id: font_title
-    size: 28
+    size: 24
+    glyphs: " !\"#$%&'()*+,-./:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~°0123456789"
 
   - file: "gfonts://Roboto"
     id: font_large
-    size: 56
+    size: 48
+    glyphs: " !\"#$%&'()*+,-./:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~°0123456789"
 
   - file: "gfonts://Roboto"
     id: font_medium
     size: 20
+    glyphs: " !\"#$%&'()*+,-./:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~°0123456789"
 
   - file: "gfonts://Roboto"
     id: font_small
     size: 14
-
-  - file: "gfonts://Roboto"
-    id: font_tiny
-    size: 12
+    glyphs: " !\"#$%&'()*+,-./:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~°0123456789"
 
 ###################
 # DISPLAY
@@ -497,172 +411,148 @@ font:
 
 display:
   - platform: ili9xxx
-    model: GC9A01A
     id: dial_display
+    model: GC9A01A
     cs_pin: GPIO7
     dc_pin: GPIO4
     reset_pin: GPIO8
     invert_colors: true
     update_interval: 0.05s
     rotation: 0
-    lambda: |-
-      //===========================================
-      // WIFI SETUP MODE DISPLAY
-      //===========================================
-      if (id(wifi_setup_mode)) {
-        // Draw WiFi setup screen
-        it.print(120, 15, id(font_title), Color(0, 150, 255), TextAlign::CENTER, "WiFi Setup");
+    pages:
+      ###################
+      # HOME PAGE
+      ###################
+      - id: home_page
+        lambda: |-
+          // Background
+          it.filled_circle(120, 120, 120, id(color_background));
 
-        it.filled_rectangle(10, 35, 220, 2, Color(0, 150, 255));
+          // Title
+          it.print(120, 20, id(font_title), id(color_primary), TextAlign::TOP_CENTER, "M5Dial Control");
 
-        if (!id(wifi_connected).state) {
-          // Not connected - show setup instructions
-          it.print(120, 55, id(font_small), Color(255, 255, 255), TextAlign::CENTER, "1. Connect WiFi");
-          it.print(120, 75, id(font_medium), Color(255, 255, 0), TextAlign::CENTER, "SSID M5Dial Setup");
-          it.print(120, 95, id(font_tiny), Color(150, 150, 150), TextAlign::CENTER, "Password m5dial123");
+          // Time display
+          it.strftime(120, 60, id(font_medium), id(color_secondary), TextAlign::TOP_CENTER, "%H %M", id(esptime).now());
 
-          it.print(120, 120, id(font_small), Color(255, 255, 255), TextAlign::CENTER, "2. Open browser");
-          it.print(120, 138, id(font_small), Color(255, 255, 255), TextAlign::CENTER, "3. Setup WiFi");
-
-          it.print(120, 170, id(font_tiny), Color(200, 200, 200), TextAlign::CENTER, "Or connect via USB");
-          it.print(120, 185, id(font_tiny), Color(200, 200, 200), TextAlign::CENTER, "and use Improv");
-
-        } else {
-          // Connected - show current network
-          it.print(120, 55, id(font_medium), Color(0, 255, 0), TextAlign::CENTER, "Connected!");
-
-          // Show IP address
-          if (wifi::global_wifi_component->is_connected()) {
-            it.print(120, 90, id(font_small), Color(150, 150, 150), TextAlign::CENTER, "IP Address");
-            auto addresses = wifi::global_wifi_component->get_ip_addresses();
-            if (!addresses.empty()) {
-              it.printf(120, 110, id(font_medium), Color(100, 200, 255), TextAlign::CENTER,
-                       "%s", addresses[0].str().c_str());
-            }
+          // Mode indicators in circular layout
+          // Mode 1 - Light (top)
+          if (id(control_mode) == 1) {
+            it.filled_circle(120, 90, 25, id(color_primary));
+          } else {
+            it.circle(120, 90, 25, id(color_primary));
           }
+          it.print(120, 90, id(font_small), id(color_secondary), TextAlign::CENTER, "Light");
 
-          it.print(120, 155, id(font_small), Color(0, 255, 0), TextAlign::CENTER, "Press button or");
-          it.print(120, 175, id(font_small), Color(0, 255, 0), TextAlign::CENTER, "touch to exit");
-        }
+          // Mode 2 - Media (right)
+          if (id(control_mode) == 2) {
+            it.filled_circle(180, 135, 25, id(color_primary));
+          } else {
+            it.circle(180, 135, 25, id(color_primary));
+          }
+          it.print(180, 135, id(font_small), id(color_secondary), TextAlign::CENTER, "Media");
 
-        // Draw flashing WiFi icon area
-        int blink = (millis() / 500) % 2;
-        if (blink) {
-          it.filled_circle(120, 215, 10, Color(0, 100, 255));
-          it.print(120, 215, id(font_medium), Color(255, 255, 255), TextAlign::CENTER, "W");
-        } else {
-          it.circle(120, 215, 10, Color(0, 100, 255));
-        }
+          // Mode 3 - Climate (left)
+          if (id(control_mode) == 3) {
+            it.filled_circle(60, 135, 25, id(color_primary));
+          } else {
+            it.circle(60, 135, 25, id(color_primary));
+          }
+          it.print(60, 135, id(font_small), id(color_secondary), TextAlign::CENTER, "Temp");
 
-        return;  // Exit early, don't draw normal control UI
-      }
+          // Instructions
+          it.print(120, 200, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Press button to select mode");
 
-      //===========================================
-      // NORMAL CONTROL MODE DISPLAY
-      //===========================================
+      ###################
+      # CONTROL PAGE
+      ###################
+      - id: control_page
+        lambda: |-
+          // Background
+          it.filled_circle(120, 120, 120, id(color_background));
 
-      // Get current value based on mode
-      float current_value = 0;
-      const char* mode_name = "";
-      Color mode_color = Color(255, 255, 255);
-      const char* unit = "";
+          // Home button at top
+          it.print(120, 10, id(font_small), id(color_primary), TextAlign::TOP_CENTER, "< Home");
 
-      if (id(control_mode) == 0) {
-        // Light mode
-        current_value = id(light_brightness).state;
-        mode_name = "LIGHT";
-        mode_color = Color(255, 200, 0);  // Yellow
-        unit = "%";
-      } else if (id(control_mode) == 1) {
-        // Volume mode
-        current_value = id(media_volume).state;
-        mode_name = "VOLUME";
-        mode_color = Color(0, 255, 100);  // Green
-        unit = "";
-      } else if (id(control_mode) == 2) {
-        // Climate mode
-        current_value = id(thermostat_temp).state;
-        mode_name = "CLIMATE";
-        mode_color = Color(255, 100, 0);  // Orange
-        unit = "°C";
-      }
+          // Display based on current mode
+          if (id(control_mode) == 1) {
+            // Light Control
+            it.print(120, 40, id(font_title), id(color_primary), TextAlign::TOP_CENTER, "Light");
 
-      // Draw mode title
-      it.print(120, 25, id(font_title), mode_color, TextAlign::CENTER, mode_name);
+            // State
+            std::string state_text = (id(light_state).state == "on") ? "ON" : "OFF";
+            auto state_color = (id(light_state).state == "on") ? id(color_on) : id(color_off);
+            it.print(120, 75, id(font_medium), state_color, TextAlign::TOP_CENTER, state_text.c_str());
 
-      // Draw main value
-      if (id(control_mode) == 2) {
-        // Climate shows decimal
-        it.printf(120, 90, id(font_large), Color(255, 255, 255), TextAlign::CENTER, "%.1f", current_value);
-        it.print(180, 100, id(font_medium), Color(255, 255, 255), TextAlign::CENTER_LEFT, unit);
-      } else {
-        // Light and volume show integers
-        it.printf(120, 90, id(font_large), Color(255, 255, 255), TextAlign::CENTER, "%d", (int)current_value);
-        it.print(180, 100, id(font_medium), Color(255, 255, 255), TextAlign::CENTER_LEFT, unit);
-      }
+            // Brightness circle
+            float brightness_pct = (id(light_brightness).state / 255.0) * 100.0;
+            int arc_degrees = (int)(brightness_pct * 3.6);
 
-      // Draw circular progress indicator
-      int center_x = 120;
-      int center_y = 120;
-      int radius = 100;
-      float progress = 0;
+            // Draw arc showing brightness level
+            for (int angle = 0; angle < arc_degrees; angle++) {
+              float rad = (angle - 90) * 0.01745329;
+              int x = 120 + (int)(60 * cos(rad));
+              int y = 140 + (int)(60 * sin(rad));
+              it.filled_circle(x, y, 3, id(color_primary));
+            }
 
-      if (id(control_mode) == 0 || id(control_mode) == 1) {
-        progress = current_value / 100.0;
-      } else {
-        progress = (current_value - 15.0) / 15.0;  // 15-30°C range
-      }
+            // Brightness percentage
+            it.printf(120, 140, id(font_large), id(color_secondary), TextAlign::CENTER, "%.0f%%", brightness_pct);
 
-      // Draw background circle
-      it.circle(center_x, center_y, radius, Color(40, 40, 40));
+            it.print(120, 200, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Turn to adjust");
+          }
+          else if (id(control_mode) == 2) {
+            // Media Player Control
+            it.print(120, 40, id(font_title), id(color_primary), TextAlign::TOP_CENTER, "Media");
 
-      // Draw progress arc
-      for (int angle = -90; angle < -90 + (360 * progress); angle += 2) {
-        float rad = angle * 3.14159 / 180.0;
-        int x = center_x + (int)(radius * cos(rad));
-        int y = center_y + (int)(radius * sin(rad));
-        it.filled_circle(x, y, 4, mode_color);
-      }
+            // State
+            std::string state_text = (id(media_state).state == "playing") ? "PLAYING" :
+                                    (id(media_state).state == "paused") ? "PAUSED" : "OFF";
+            auto state_color = (id(media_state).state == "playing") ? id(color_on) : id(color_off);
+            it.print(120, 75, id(font_medium), state_color, TextAlign::TOP_CENTER, state_text.c_str());
 
-      // Draw additional info for climate mode
-      if (id(control_mode) == 2 && id(current_temp).has_state()) {
-        float current = id(current_temp).state;
-        it.printf(120, 160, id(font_small), Color(100, 200, 255), TextAlign::CENTER, "Current %.1f°C", current);
+            // Volume circle
+            float volume_pct = id(media_volume).state * 100.0;
+            int arc_degrees = (int)(volume_pct * 3.6);
 
-        // Status indicator
-        const char* status = "IDLE";
-        Color status_color = Color(100, 100, 100);
+            // Draw arc showing volume level
+            for (int angle = 0; angle < arc_degrees; angle++) {
+              float rad = (angle - 90) * 0.01745329;
+              int x = 120 + (int)(60 * cos(rad));
+              int y = 140 + (int)(60 * sin(rad));
+              it.filled_circle(x, y, 3, id(color_primary));
+            }
 
-        if (current_value > current + 0.5) {
-          status = "HEATING";
-          status_color = Color(255, 50, 0);
-        } else if (current_value < current - 0.5) {
-          status = "COOLING";
-          status_color = Color(0, 150, 255);
-        } else {
-          status = "OK";
-          status_color = Color(0, 255, 0);
-        }
+            // Volume percentage
+            it.printf(120, 140, id(font_large), id(color_secondary), TextAlign::CENTER, "%.0f%%", volume_pct);
 
-        it.print(120, 180, id(font_tiny), status_color, TextAlign::CENTER, status);
-      }
+            it.print(120, 200, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Turn to adjust volume");
+          }
+          else if (id(control_mode) == 3) {
+            // Climate Control
+            it.print(120, 40, id(font_title), id(color_primary), TextAlign::TOP_CENTER, "Climate");
 
-      // Mode indicator dots at bottom
-      for (int i = 0; i < 3; i++) {
-        int x = 90 + (i * 30);
-        int y = 215;
+            // State
+            std::string state_text = (id(climate_state).state == "heat") ? "HEATING" :
+                                    (id(climate_state).state == "cool") ? "COOLING" : "OFF";
+            auto state_color = (id(climate_state).state == "off") ? id(color_off) : id(color_on);
+            it.print(120, 75, id(font_medium), state_color, TextAlign::TOP_CENTER, state_text.c_str());
 
-        if (i == id(control_mode)) {
-          it.filled_circle(x, y, 6, Color(255, 255, 255));
-        } else {
-          it.circle(x, y, 5, Color(80, 80, 80));
-          it.filled_circle(x, y, 2, Color(80, 80, 80));
-        }
-      }
+            // Temperature circle
+            float temp = id(climate_temperature).state;
+            int arc_degrees = (int)((temp - 15) * 12);  // 15°C = 0°, 45°C = 360°
+            if (arc_degrees < 0) arc_degrees = 0;
+            if (arc_degrees > 360) arc_degrees = 360;
 
-      // WiFi status indicator (top right)
-      if (id(wifi_connected).state) {
-        it.filled_circle(230, 10, 3, Color(0, 255, 0));
-      } else {
-        it.filled_circle(230, 10, 3, Color(255, 0, 0));
-      }
+            // Draw arc showing temperature
+            for (int angle = 0; angle < arc_degrees; angle++) {
+              float rad = (angle - 90) * 0.01745329;
+              int x = 120 + (int)(60 * cos(rad));
+              int y = 140 + (int)(60 * sin(rad));
+              it.filled_circle(x, y, 3, id(color_primary));
+            }
+
+            // Temperature value
+            it.printf(120, 140, id(font_large), id(color_secondary), TextAlign::CENTER, "%.1f C", temp);
+
+            it.print(120, 200, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Turn to adjust temp");
+          }

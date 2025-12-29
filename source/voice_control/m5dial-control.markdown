@@ -84,15 +84,12 @@ esphome:
   friendly_name: M5Dial Controller
   platformio_options:
     board_build.flash_mode: dio
-  on_boot:
-    priority: 600
-    then:
-      - light.turn_on: dial_light
 
 esp32:
   board: esp32-s3-devkitc-1
+  flash_size: 8MB
   framework:
-    type: arduino
+    type: esp-idf
 
 # Enable logging
 logger:
@@ -113,77 +110,134 @@ wifi:
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "M5Dial Fallback Hotspot"
-    password: "fallbackpassword"
+    password: "m5dial123"
 
 captive_portal:
 
-# I2C Bus for internal peripherals
+# I2C Bus for touchscreen and RTC
 i2c:
-  sda: GPIO11
-  scl: GPIO12
-  scan: true
+  - id: internal_i2c
+    sda: GPIO11
+    scl: GPIO12
+    scan: false
 
 # SPI Bus for display
 spi:
-  clk_pin: GPIO6
+  id: spi_bus
   mosi_pin: GPIO5
-  miso_pin: GPIO4
+  clk_pin: GPIO6
 
-# Display configuration (GC9A01 240x240 round display)
+# Touchscreen
+touchscreen:
+  - platform: ft5x06
+    id: touchscreen_dial
+    i2c_id: internal_i2c
+    address: 0x38
+
+# RTC (Real-Time Clock)
+time:
+  - platform: pcf8563
+    id: rtctime
+    i2c_id: internal_i2c
+    address: 0x51
+    update_interval: never
+
+  - platform: homeassistant
+    id: esptime
+    on_time_sync:
+      then:
+        - pcf8563.write_time:
+
+# Buzzer for sound feedback
+output:
+  - platform: ledc
+    pin: GPIO3
+    id: buzzer
+
+  # Backlight PWM control
+  - platform: ledc
+    pin: GPIO9
+    id: backlight_pwm
+
+# Backlight control
+light:
+  - platform: monochromatic
+    name: "Backlight"
+    output: backlight_pwm
+    id: backlight
+    default_transition_length: 0s
+    restore_mode: ALWAYS_ON
+    internal: true
+
+# Sound
+rtttl:
+  output: buzzer
+
+# Display configuration (GC9A01A 240x240 round display)
+# IMPORTANT: Use ili9xxx platform with GC9A01A model and invert_colors: true
 display:
-  - platform: gc9a01
+  - platform: ili9xxx
     id: dial_display
+    model: GC9A01A
     cs_pin: GPIO7
     dc_pin: GPIO4
-    update_interval: 100ms
+    reset_pin: GPIO8
+    invert_colors: true
+    update_interval: 0.05s
     rotation: 0
     lambda: |-
       // Clear screen with black background
-      it.fill(COLOR_BLACK);
+      it.filled_circle(120, 120, 120, Color(0, 0, 0));
 
       // Draw title
-      it.print(120, 20, id(font_title), COLOR_WHITE, TextAlign::CENTER, "M5Dial");
-      it.print(120, 50, id(font_medium), COLOR_CYAN, TextAlign::CENTER, "Controller");
+      it.print(120, 20, id(font_title), Color(0, 168, 232), TextAlign::TOP_CENTER, "M5Dial");
+      it.print(120, 50, id(font_medium), Color(255, 255, 255), TextAlign::TOP_CENTER, "Controller");
 
-      // Draw status
-      if (id(wifi_connected).state) {
-        it.print(120, 180, id(font_small), COLOR_GREEN, TextAlign::CENTER, "Connected");
-      } else {
-        it.print(120, 180, id(font_small), COLOR_RED, TextAlign::CENTER, "Disconnected");
-      }
+      // Draw time
+      it.strftime(120, 100, id(font_medium), Color(255, 255, 255), TextAlign::CENTER, "%H %M", id(esptime).now());
+
+      // Draw status message
+      it.print(120, 180, id(font_small), Color(255, 255, 255), TextAlign::TOP_CENTER, "Ready");
+
+# Colors
+color:
+  - id: color_primary
+    hex: '00A8E8'
+  - id: color_background
+    hex: '000000'
 
 # Fonts
 font:
   - file: "gfonts://Roboto"
     id: font_title
     size: 24
+    glyphs: " !\"#$%&'()*+,-./:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~°0123456789"
   - file: "gfonts://Roboto"
     id: font_medium
     size: 18
+    glyphs: " !\"#$%&'()*+,-./:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~°0123456789"
   - file: "gfonts://Roboto"
     id: font_small
     size: 14
+    glyphs: " !\"#$%&'()*+,-./:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~°0123456789"
 
 # Rotary Encoder
 sensor:
   - platform: rotary_encoder
     name: "Dial Encoder"
     id: dial_encoder
-    pin_a:
-      number: GPIO40
-      mode:
-        input: true
-        pullup: true
-    pin_b:
-      number: GPIO41
-      mode:
-        input: true
-        pullup: true
-    resolution: 2
-    on_value:
+    pin_a: GPIO40
+    pin_b: GPIO41
+    on_clockwise:
       then:
+        - rtttl.play: 'beep:d=64,o=5,b=255:c7'
         - lambda: |-
-            ESP_LOGD("encoder", "Position: %d", (int)id(dial_encoder).state);
+            ESP_LOGD("encoder", "Clockwise turn");
+    on_anticlockwise:
+      then:
+        - rtttl.play: 'beep:d=64,o=5,b=255:c7'
+        - lambda: |-
+            ESP_LOGD("encoder", "Counter-clockwise turn");
 
 # Center button (encoder button)
 binary_sensor:
@@ -192,10 +246,8 @@ binary_sensor:
     id: dial_button
     pin:
       number: GPIO42
-      mode:
-        input: true
-        pullup: true
       inverted: true
+    internal: true
     on_press:
       then:
         - logger.log: "Dial button pressed"
