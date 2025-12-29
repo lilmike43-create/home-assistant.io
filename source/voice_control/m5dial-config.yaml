@@ -689,38 +689,77 @@ display:
           it.filled_circle(120, 120, 120, id(color_background));
 
           // Title
-          it.print(120, 20, id(font_title), id(color_primary), TextAlign::TOP_CENTER, "M5Dial Control");
+          it.print(120, 15, id(font_medium), id(color_primary), TextAlign::TOP_CENTER, "SELECT DEVICE");
 
-          // Time display
-          it.strftime(120, 60, id(font_medium), id(color_secondary), TextAlign::TOP_CENTER, "%H %M", id(esptime).now());
+          // Center circle for selected device
+          it.filled_circle(120, 120, 35, id(color_primary));
 
-          // Mode indicators in circular layout
-          // Mode 1 - Light (top)
-          if (id(control_mode) == 1) {
-            it.filled_circle(120, 90, 25, id(color_primary));
+          // Show selected device number
+          it.printf(120, 120, id(font_large), id(color_background), TextAlign::CENTER, "%d", id(selected_device));
+
+          // Device positions in circle (6 devices around center)
+          // Device 1 - Desk Light (top)
+          int dev1_x = 120, dev1_y = 60;
+          if (id(selected_device) == 1) {
+            it.filled_circle(dev1_x, dev1_y, 22, id(color_accent));
           } else {
-            it.circle(120, 90, 25, id(color_primary));
+            it.circle(dev1_x, dev1_y, 22, id(color_secondary));
           }
-          it.print(120, 90, id(font_small), id(color_secondary), TextAlign::CENTER, "Light");
+          it.print(dev1_x, dev1_y - 4, id(font_small), id(selected_device) == 1 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "Desk");
+          it.print(dev1_x, dev1_y + 8, id(font_small), id(selected_device) == 1 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "1");
 
-          // Mode 2 - Media (right)
-          if (id(control_mode) == 2) {
-            it.filled_circle(180, 135, 25, id(color_primary));
+          // Device 2 - Bedroom Light (top-right)
+          int dev2_x = 170, dev2_y = 85;
+          if (id(selected_device) == 2) {
+            it.filled_circle(dev2_x, dev2_y, 22, id(color_accent));
           } else {
-            it.circle(180, 135, 25, id(color_primary));
+            it.circle(dev2_x, dev2_y, 22, id(color_secondary));
           }
-          it.print(180, 135, id(font_small), id(color_secondary), TextAlign::CENTER, "Media");
+          it.print(dev2_x, dev2_y - 4, id(font_small), id(selected_device) == 2 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "Bed");
+          it.print(dev2_x, dev2_y + 8, id(font_small), id(selected_device) == 2 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "2");
 
-          // Mode 3 - Climate (left)
-          if (id(control_mode) == 3) {
-            it.filled_circle(60, 135, 25, id(color_primary));
+          // Device 3 - Kitchen Light (bottom-right)
+          int dev3_x = 170, dev3_y = 155;
+          if (id(selected_device) == 3) {
+            it.filled_circle(dev3_x, dev3_y, 22, id(color_accent));
           } else {
-            it.circle(60, 135, 25, id(color_primary));
+            it.circle(dev3_x, dev3_y, 22, id(color_secondary));
           }
-          it.print(60, 135, id(font_small), id(color_secondary), TextAlign::CENTER, "Temp");
+          it.print(dev3_x, dev3_y - 4, id(font_small), id(selected_device) == 3 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "Kit");
+          it.print(dev3_x, dev3_y + 8, id(font_small), id(selected_device) == 3 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "3");
+
+          // Device 4 - Living Room Light (bottom)
+          int dev4_x = 120, dev4_y = 180;
+          if (id(selected_device) == 4) {
+            it.filled_circle(dev4_x, dev4_y, 22, id(color_accent));
+          } else {
+            it.circle(dev4_x, dev4_y, 22, id(color_secondary));
+          }
+          it.print(dev4_x, dev4_y - 4, id(font_small), id(selected_device) == 4 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "Live");
+          it.print(dev4_x, dev4_y + 8, id(font_small), id(selected_device) == 4 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "4");
+
+          // Device 5 - Climate (bottom-left)
+          int dev5_x = 70, dev5_y = 155;
+          if (id(selected_device) == 5) {
+            it.filled_circle(dev5_x, dev5_y, 22, id(color_accent));
+          } else {
+            it.circle(dev5_x, dev5_y, 22, id(color_secondary));
+          }
+          it.print(dev5_x, dev5_y - 4, id(font_small), id(selected_device) == 5 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "Clim");
+          it.print(dev5_x, dev5_y + 8, id(font_small), id(selected_device) == 5 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "5");
+
+          // Device 6 - Coffee Maker Switch (top-left)
+          int dev6_x = 70, dev6_y = 85;
+          if (id(selected_device) == 6) {
+            it.filled_circle(dev6_x, dev6_y, 22, id(color_accent));
+          } else {
+            it.circle(dev6_x, dev6_y, 22, id(color_secondary));
+          }
+          it.print(dev6_x, dev6_y - 4, id(font_small), id(selected_device) == 6 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "Coff");
+          it.print(dev6_x, dev6_y + 8, id(font_small), id(selected_device) == 6 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "6");
 
           // Instructions
-          it.print(120, 200, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Press button to select mode");
+          it.print(120, 215, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Turn to select, press to control");
 
       ###################
       # CONTROL PAGE
@@ -735,69 +774,107 @@ display:
 
           // Display based on current mode
           if (id(control_mode) == 1) {
-            // Light Control
-            it.print(120, 40, id(font_title), id(color_primary), TextAlign::TOP_CENTER, "Light");
+            // Light Control - show selected light
+            it.print(120, 40, id(font_title), id(color_primary), TextAlign::TOP_CENTER, "BRIGHTNESS");
 
-            // State - check if loaded
-            if (id(light_state).has_state()) {
-              std::string state_text = (id(light_state).state == "on") ? "ON" : "OFF";
-              auto state_color = (id(light_state).state == "on") ? id(color_on) : id(color_off);
-              it.print(120, 75, id(font_medium), state_color, TextAlign::TOP_CENTER, state_text.c_str());
-            } else {
-              it.print(120, 75, id(font_medium), id(color_secondary), TextAlign::TOP_CENTER, "Loading...");
+            // Show which light is selected
+            std::string light_name = "";
+            if (id(selected_device) == 1) light_name = "Desk";
+            else if (id(selected_device) == 2) light_name = "Bedroom";
+            else if (id(selected_device) == 3) light_name = "Kitchen";
+            else if (id(selected_device) == 4) light_name = "Living";
+            it.print(120, 65, id(font_small), id(color_accent), TextAlign::TOP_CENTER, light_name.c_str());
+
+            // Get brightness for selected light
+            float brightness_pct = 0;
+            bool has_brightness = false;
+
+            if (id(selected_device) == 1 && !isnan(id(light_1_brightness).state)) {
+              brightness_pct = (id(light_1_brightness).state / 255.0) * 100.0;
+              has_brightness = true;
+            }
+            else if (id(selected_device) == 2 && !isnan(id(light_2_brightness).state)) {
+              brightness_pct = (id(light_2_brightness).state / 255.0) * 100.0;
+              has_brightness = true;
+            }
+            else if (id(selected_device) == 3 && !isnan(id(light_3_brightness).state)) {
+              brightness_pct = (id(light_3_brightness).state / 255.0) * 100.0;
+              has_brightness = true;
+            }
+            else if (id(selected_device) == 4 && !isnan(id(light_4_brightness).state)) {
+              brightness_pct = (id(light_4_brightness).state / 255.0) * 100.0;
+              has_brightness = true;
             }
 
-            // Brightness circle - check if loaded
-            if (!isnan(id(light_brightness).state)) {
-              float brightness_pct = (id(light_brightness).state / 255.0) * 100.0;
+            if (has_brightness) {
+              // Circular progress
               int arc_degrees = (int)(brightness_pct * 3.6);
 
-              // Draw arc showing brightness level
+              // Background circle
+              it.circle(120, 140, 70, id(color_secondary));
+
+              // Progress arc
               for (int angle = 0; angle < arc_degrees; angle++) {
                 float rad = (angle - 90) * 0.01745329;
-                int x = 120 + (int)(60 * cos(rad));
-                int y = 140 + (int)(60 * sin(rad));
-                it.filled_circle(x, y, 3, id(color_primary));
+                int x = 120 + (int)(70 * cos(rad));
+                int y = 140 + (int)(70 * sin(rad));
+                it.filled_circle(x, y, 4, id(color_primary));
               }
 
               // Brightness percentage
-              it.printf(120, 140, id(font_large), id(color_secondary), TextAlign::CENTER, "%.0f%%", brightness_pct);
+              it.printf(120, 125, id(font_large), id(color_accent), TextAlign::CENTER, "%.0f", brightness_pct);
+              it.print(120, 155, id(font_medium), id(color_secondary), TextAlign::CENTER, "%");
             }
 
-            it.print(120, 200, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Turn to adjust");
+            it.print(40, 25, id(font_small), id(color_accent), TextAlign::CENTER, "COLOR");
+            it.print(120, 210, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Turn to adjust");
           }
           else if (id(control_mode) == 2) {
-            // Media Player Control
-            it.print(120, 40, id(font_title), id(color_primary), TextAlign::TOP_CENTER, "Media");
+            // RGB Color Picker
+            it.print(120, 10, id(font_medium), id(color_primary), TextAlign::TOP_CENTER, "COLOR PICKER");
 
-            // State - check if loaded
-            if (id(media_state).has_state()) {
-              std::string state_text = (id(media_state).state == "playing") ? "PLAYING" :
-                                      (id(media_state).state == "paused") ? "PAUSED" : "OFF";
-              auto state_color = (id(media_state).state == "playing") ? id(color_on) : id(color_off);
-              it.print(120, 75, id(font_medium), state_color, TextAlign::TOP_CENTER, state_text.c_str());
+            // Show which channel
+            std::string channel_name = "";
+            Color channel_color = id(color_secondary);
+            int channel_value = 0;
+
+            if (id(color_channel) == 0) {
+              channel_name = "RED";
+              channel_color = id(color_red);
+              channel_value = id(rgb_red);
+            } else if (id(color_channel) == 1) {
+              channel_name = "GREEN";
+              channel_color = id(color_green);
+              channel_value = id(rgb_green);
             } else {
-              it.print(120, 75, id(font_medium), id(color_secondary), TextAlign::TOP_CENTER, "Loading...");
+              channel_name = "BLUE";
+              channel_color = id(color_blue);
+              channel_value = id(rgb_blue);
             }
 
-            // Volume circle - check if loaded
-            if (!isnan(id(media_volume).state)) {
-              float volume_pct = id(media_volume).state * 100.0;
-              int arc_degrees = (int)(volume_pct * 3.6);
+            it.print(120, 40, id(font_medium), channel_color, TextAlign::TOP_CENTER, channel_name.c_str());
 
-              // Draw arc showing volume level
-              for (int angle = 0; angle < arc_degrees; angle++) {
-                float rad = (angle - 90) * 0.01745329;
-                int x = 120 + (int)(60 * cos(rad));
-                int y = 140 + (int)(60 * sin(rad));
-                it.filled_circle(x, y, 3, id(color_primary));
-              }
+            // Color preview circle
+            Color preview = Color(id(rgb_red), id(rgb_green), id(rgb_blue));
+            it.filled_circle(120, 110, 45, preview);
+            it.circle(120, 110, 47, id(color_primary));
 
-              // Volume percentage
-              it.printf(120, 140, id(font_large), id(color_secondary), TextAlign::CENTER, "%.0f%%", volume_pct);
+            // Channel value arc
+            int arc_degrees = (int)((channel_value / 255.0) * 360);
+            for (int angle = 0; angle < arc_degrees; angle++) {
+              float rad = (angle - 90) * 0.01745329;
+              int x = 120 + (int)(65 * cos(rad));
+              int y = 110 + (int)(65 * sin(rad));
+              it.filled_circle(x, y, 3, channel_color);
             }
 
-            it.print(120, 200, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Turn to adjust volume");
+            // RGB values
+            it.printf(120, 170, id(font_small), id(color_red), TextAlign::CENTER, "R %d", id(rgb_red));
+            it.printf(70, 190, id(font_small), id(color_green), TextAlign::CENTER, "G %d", id(rgb_green));
+            it.printf(170, 190, id(font_small), id(color_blue), TextAlign::CENTER, "B %d", id(rgb_blue));
+
+            it.print(120, 220, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Tap bottom to switch");
+            it.print(200, 25, id(font_small), id(color_accent), TextAlign::CENTER, "APPLY");
           }
           else if (id(control_mode) == 3) {
             // Climate Control
