@@ -258,7 +258,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_1}
-                    brightness_step_pct: '10'
+                    brightness_step_pct: 10
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 2;'
@@ -267,7 +267,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_2}
-                    brightness_step_pct: '10'
+                    brightness_step_pct: 10
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 3;'
@@ -276,7 +276,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_3}
-                    brightness_step_pct: '10'
+                    brightness_step_pct: 10
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 4;'
@@ -285,7 +285,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_4}
-                    brightness_step_pct: '10'
+                    brightness_step_pct: 10
         # Climate control
         - if:
             condition:
@@ -328,7 +328,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_1}
-                    brightness_step_pct: '-10'
+                    brightness_step_pct: -10
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 2;'
@@ -337,7 +337,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_2}
-                    brightness_step_pct: '-10'
+                    brightness_step_pct: -10
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 3;'
@@ -346,7 +346,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_3}
-                    brightness_step_pct: '-10'
+                    brightness_step_pct: -10
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 4;'
@@ -355,7 +355,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_4}
-                    brightness_step_pct: '-10'
+                    brightness_step_pct: -10
         # Climate control
         - if:
             condition:
@@ -539,15 +539,10 @@ binary_sensor:
     y_min: 0
     y_max: 70
     on_press:
-      - lambda: |-
-          if (id(control_mode) == 2) {  // In color picker mode
-            // Will trigger service call based on selected device
-            id(control_mode) = 1;  // Return to brightness mode
-          }
-      # Apply color to selected light
+      # Apply color to selected light (check BEFORE changing mode!)
       - if:
           condition:
-            lambda: 'return id(control_mode) == 1 && id(selected_device) == 1;'
+            lambda: 'return id(control_mode) == 2 && id(selected_device) == 1;'
           then:
             - homeassistant.action:
                 service: light.turn_on
@@ -562,7 +557,7 @@ binary_sensor:
                     return std::string(buf);
       - if:
           condition:
-            lambda: 'return id(control_mode) == 1 && id(selected_device) == 2;'
+            lambda: 'return id(control_mode) == 2 && id(selected_device) == 2;'
           then:
             - homeassistant.action:
                 service: light.turn_on
@@ -577,7 +572,7 @@ binary_sensor:
                     return std::string(buf);
       - if:
           condition:
-            lambda: 'return id(control_mode) == 1 && id(selected_device) == 3;'
+            lambda: 'return id(control_mode) == 2 && id(selected_device) == 3;'
           then:
             - homeassistant.action:
                 service: light.turn_on
@@ -592,7 +587,7 @@ binary_sensor:
                     return std::string(buf);
       - if:
           condition:
-            lambda: 'return id(control_mode) == 1 && id(selected_device) == 4;'
+            lambda: 'return id(control_mode) == 2 && id(selected_device) == 4;'
           then:
             - homeassistant.action:
                 service: light.turn_on
@@ -605,6 +600,11 @@ binary_sensor:
                     char buf[32];
                     sprintf(buf, "[%d,%d,%d]", id(rgb_red), id(rgb_green), id(rgb_blue));
                     return std::string(buf);
+      # Now return to brightness mode
+      - lambda: |-
+          if (id(control_mode) == 2) {
+            id(control_mode) = 1;  // Return to brightness mode
+          }
 
   # Touchscreen - Switch RGB channel (bottom center, when in color picker)
   - platform: touchscreen
@@ -848,7 +848,19 @@ display:
           // Display based on current mode
           if (id(control_mode) == 1) {
             // Light Control - show selected light
-            it.print(120, 40, id(font_title), id(color_primary), TextAlign::TOP_CENTER, "BRIGHTNESS");
+            // Curved "BRIGHTNESS" text along top arc
+            const char* title = "BRIGHTNESS";
+            int title_len = strlen(title);
+            float title_spacing = 7.0;  // Degrees between characters
+            float title_start_angle = -90 - (title_len * title_spacing / 2);
+            int title_radius = 105;
+            for (int i = 0; i < title_len; i++) {
+              float angle = (title_start_angle + i * title_spacing) * 0.01745329;
+              int x = 120 + (int)(title_radius * cos(angle));
+              int y = 120 + (int)(title_radius * sin(angle));
+              char str[2] = {title[i], '\0'};
+              it.print(x, y, id(font_title), id(color_primary), TextAlign::CENTER, str);
+            }
 
             // Show which light is selected
             std::string light_name = "";
@@ -856,7 +868,7 @@ display:
             else if (id(selected_device) == 2) light_name = "${light_2_name}";
             else if (id(selected_device) == 3) light_name = "${light_3_name}";
             else if (id(selected_device) == 4) light_name = "${light_4_name}";
-            it.print(120, 65, id(font_small), id(color_accent), TextAlign::TOP_CENTER, light_name.c_str());
+            it.print(120, 45, id(font_small), id(color_accent), TextAlign::TOP_CENTER, light_name.c_str());
 
             // Get brightness for selected light
             float brightness_pct = 0;
@@ -900,11 +912,36 @@ display:
             }
 
             it.print(40, 25, id(font_small), id(color_accent), TextAlign::CENTER, "COLOR");
-            it.print(120, 210, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Turn to adjust");
+
+            // Curved instruction text along bottom arc
+            const char* instructions = "Turn to adjust";
+            int inst_len = strlen(instructions);
+            float inst_spacing = 5.5;
+            float inst_start_angle = 90 - (inst_len * inst_spacing / 2);
+            int inst_radius = 108;
+            for (int i = 0; i < inst_len; i++) {
+              float angle = (inst_start_angle + i * inst_spacing) * 0.01745329;
+              int x = 120 + (int)(inst_radius * cos(angle));
+              int y = 120 + (int)(inst_radius * sin(angle));
+              char str[2] = {instructions[i], '\0'};
+              it.print(x, y, id(font_small), id(color_secondary), TextAlign::CENTER, str);
+            }
           }
           else if (id(control_mode) == 2) {
             // RGB Color Picker
-            it.print(120, 10, id(font_medium), id(color_primary), TextAlign::TOP_CENTER, "COLOR PICKER");
+            // Curved "COLOR PICKER" text along top arc
+            const char* title = "COLOR PICKER";
+            int title_len = strlen(title);
+            float title_spacing = 6.0;
+            float title_start_angle = -90 - (title_len * title_spacing / 2);
+            int title_radius = 105;
+            for (int i = 0; i < title_len; i++) {
+              float angle = (title_start_angle + i * title_spacing) * 0.01745329;
+              int x = 120 + (int)(title_radius * cos(angle));
+              int y = 120 + (int)(title_radius * sin(angle));
+              char str[2] = {title[i], '\0'};
+              it.print(x, y, id(font_medium), id(color_primary), TextAlign::CENTER, str);
+            }
 
             // Show which channel
             std::string channel_name = "";
@@ -925,7 +962,7 @@ display:
               channel_value = id(rgb_blue);
             }
 
-            it.print(120, 40, id(font_medium), channel_color, TextAlign::TOP_CENTER, channel_name.c_str());
+            it.print(120, 35, id(font_medium), channel_color, TextAlign::TOP_CENTER, channel_name.c_str());
 
             // Color preview circle
             Color preview = Color(id(rgb_red), id(rgb_green), id(rgb_blue));
@@ -946,7 +983,19 @@ display:
             it.printf(70, 190, id(font_small), id(color_green), TextAlign::CENTER, "G %d", id(rgb_green));
             it.printf(170, 190, id(font_small), id(color_blue), TextAlign::CENTER, "B %d", id(rgb_blue));
 
-            it.print(120, 220, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Tap bottom to switch");
+            // Curved instruction along bottom arc
+            const char* instructions = "Tap bottom-switch";
+            int inst_len = strlen(instructions);
+            float inst_spacing = 4.5;
+            float inst_start_angle = 90 - (inst_len * inst_spacing / 2);
+            int inst_radius = 108;
+            for (int i = 0; i < inst_len; i++) {
+              float angle = (inst_start_angle + i * inst_spacing) * 0.01745329;
+              int x = 120 + (int)(inst_radius * cos(angle));
+              int y = 120 + (int)(inst_radius * sin(angle));
+              char str[2] = {instructions[i], '\0'};
+              it.print(x, y, id(font_small), id(color_secondary), TextAlign::CENTER, str);
+            }
             it.print(200, 25, id(font_small), id(color_accent), TextAlign::CENTER, "APPLY");
           }
           else if (id(control_mode) == 3) {
