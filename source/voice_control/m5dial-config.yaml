@@ -172,68 +172,88 @@ sensor:
         - rtttl.play: ${menu_sound}
         - lambda: |-
             id(inactivity_time) = 0;
-
-            // On home page, cycle through modes
-            if (id(control_mode) == 0) {
-              if (id(control_mode) == 0) {
-                id(control_mode) = 1;
-              }
-            }
-            // In control mode, adjust values
-            else if (id(control_mode) == 1) {
-              // Light brightness +10%
-              auto call = id(homeassistant::global_homeassistant_service).make_service_call("light", "turn_on");
-              call.add_data("entity_id", "${light_entity}");
-              call.add_data("brightness_step_pct", "10");
-              call.perform();
-            }
-            else if (id(control_mode) == 2) {
-              // Media volume +5%
-              auto call = id(homeassistant::global_homeassistant_service).make_service_call("media_player", "volume_set");
-              call.add_data("entity_id", "${media_player_entity}");
-              call.add_data_template("volume_level", "{{ (state_attr('${media_player_entity}', 'volume_level') | float + 0.05) }}");
-              call.perform();
-            }
-            else if (id(control_mode) == 3) {
-              // Climate temperature +1°C
-              auto call = id(homeassistant::global_homeassistant_service).make_service_call("climate", "set_temperature");
-              call.add_data("entity_id", "${climate_entity}");
-              call.add_data_template("temperature", "{{ (state_attr('${climate_entity}', 'temperature') | float + 1.0) }}");
-              call.perform();
-            }
+        - if:
+            condition:
+              lambda: 'return id(control_mode) == 1;'
+            then:
+              # Light brightness +10%
+              - homeassistant.action:
+                  service: light.turn_on
+                  data:
+                    entity_id: ${light_entity}
+                    brightness_step_pct: 10
+        - if:
+            condition:
+              lambda: 'return id(control_mode) == 2;'
+            then:
+              # Media volume +5%
+              - homeassistant.action:
+                  service: media_player.volume_set
+                  data:
+                    entity_id: ${media_player_entity}
+                  data_template:
+                    volume_level: '{{ my_variable | float }}'
+                  variables:
+                    my_variable: |-
+                      return id(media_volume).state + 0.05;
+        - if:
+            condition:
+              lambda: 'return id(control_mode) == 3;'
+            then:
+              # Climate temperature +1°C
+              - homeassistant.action:
+                  service: climate.set_temperature
+                  data:
+                    entity_id: ${climate_entity}
+                  data_template:
+                    temperature: '{{ my_variable | float }}'
+                  variables:
+                    my_variable: |-
+                      return id(climate_temperature).state + 1.0;
 
     on_anticlockwise:
       then:
         - rtttl.play: ${menu_sound}
         - lambda: |-
             id(inactivity_time) = 0;
-
-            // On home page, cycle through modes (reverse)
-            if (id(control_mode) == 0) {
-              id(control_mode) = 1;
-            }
-            // In control mode, decrease values
-            else if (id(control_mode) == 1) {
-              // Light brightness -10%
-              auto call = id(homeassistant::global_homeassistant_service).make_service_call("light", "turn_on");
-              call.add_data("entity_id", "${light_entity}");
-              call.add_data("brightness_step_pct", "-10");
-              call.perform();
-            }
-            else if (id(control_mode) == 2) {
-              // Media volume -5%
-              auto call = id(homeassistant::global_homeassistant_service).make_service_call("media_player", "volume_set");
-              call.add_data("entity_id", "${media_player_entity}");
-              call.add_data_template("volume_level", "{{ (state_attr('${media_player_entity}', 'volume_level') | float - 0.05) }}");
-              call.perform();
-            }
-            else if (id(control_mode) == 3) {
-              // Climate temperature -1°C
-              auto call = id(homeassistant::global_homeassistant_service).make_service_call("climate", "set_temperature");
-              call.add_data("entity_id", "${climate_entity}");
-              call.add_data_template("temperature", "{{ (state_attr('${climate_entity}', 'temperature') | float - 1.0) }}");
-              call.perform();
-            }
+        - if:
+            condition:
+              lambda: 'return id(control_mode) == 1;'
+            then:
+              # Light brightness -10%
+              - homeassistant.action:
+                  service: light.turn_on
+                  data:
+                    entity_id: ${light_entity}
+                    brightness_step_pct: -10
+        - if:
+            condition:
+              lambda: 'return id(control_mode) == 2;'
+            then:
+              # Media volume -5%
+              - homeassistant.action:
+                  service: media_player.volume_set
+                  data:
+                    entity_id: ${media_player_entity}
+                  data_template:
+                    volume_level: '{{ my_variable | float }}'
+                  variables:
+                    my_variable: |-
+                      return id(media_volume).state - 0.05;
+        - if:
+            condition:
+              lambda: 'return id(control_mode) == 3;'
+            then:
+              # Climate temperature -1°C
+              - homeassistant.action:
+                  service: climate.set_temperature
+                  data:
+                    entity_id: ${climate_entity}
+                  data_template:
+                    temperature: '{{ my_variable | float }}'
+                  variables:
+                    my_variable: |-
+                      return id(climate_temperature).state - 1.0;
 
   # Home Assistant sensors for entity states
   - platform: homeassistant
