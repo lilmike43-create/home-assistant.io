@@ -18,6 +18,14 @@ substitutions:
   climate_entity: "climate.living_room"
   switch_1: "switch.coffee_maker"
 
+  # Display names for devices (short names, max 4-5 characters for best display)
+  light_1_name: "Desk"
+  light_2_name: "Bed"
+  light_3_name: "Kit"
+  light_4_name: "Live"
+  climate_name: "Clim"
+  switch_1_name: "Coff"
+
   # Display colors
   background_color: '000000'
   primary_color: 'FF8C00'      # Orange
@@ -452,18 +460,30 @@ binary_sensor:
         - lambda: |-
             id(inactivity_time) = 0;
 
-            // Mode 0 (device select): Enter brightness mode
+            // Mode 0 (device select): Enter control mode
             if (id(control_mode) == 0) {
               if (id(selected_device) <= 4) {
                 id(control_mode) = 1;  // Brightness mode for lights
               } else if (id(selected_device) == 5) {
                 id(control_mode) = 3;  // Climate mode
+              } else if (id(selected_device) == 6) {
+                // Toggle switch directly and stay on home page
+                // No mode change, just toggle
               }
             }
             // Any other mode: Return to home
             else {
               id(control_mode) = 0;
             }
+        # Toggle switch if device 6 is selected
+        - if:
+            condition:
+              lambda: 'return id(control_mode) == 0 && id(selected_device) == 6;'
+            then:
+              - homeassistant.action:
+                  service: switch.toggle
+                  data:
+                    entity_id: ${switch_1}
 
   # Touchscreen - Home button (always visible)
   - platform: touchscreen
@@ -698,45 +718,57 @@ display:
           it.printf(120, 120, id(font_large), id(color_background), TextAlign::CENTER, "%d", id(selected_device));
 
           // Device positions in circle (6 devices around center)
-          // Device 1 - Desk Light (top)
+          // Device 1 - Light 1 (top)
           int dev1_x = 120, dev1_y = 60;
+          bool light1_on = (id(light_1_state).state == "on");
           if (id(selected_device) == 1) {
             it.filled_circle(dev1_x, dev1_y, 22, id(color_accent));
+          } else if (light1_on) {
+            it.filled_circle(dev1_x, dev1_y, 22, id(color_primary));
           } else {
             it.circle(dev1_x, dev1_y, 22, id(color_secondary));
           }
-          it.print(dev1_x, dev1_y - 4, id(font_small), id(selected_device) == 1 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "Desk");
-          it.print(dev1_x, dev1_y + 8, id(font_small), id(selected_device) == 1 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "1");
+          it.print(dev1_x, dev1_y - 4, id(font_small), (id(selected_device) == 1 || light1_on) ? id(color_background) : id(color_secondary), TextAlign::CENTER, "${light_1_name}");
+          it.print(dev1_x, dev1_y + 8, id(font_small), (id(selected_device) == 1 || light1_on) ? id(color_background) : id(color_secondary), TextAlign::CENTER, "1");
 
-          // Device 2 - Bedroom Light (top-right)
+          // Device 2 - Light 2 (top-right)
           int dev2_x = 170, dev2_y = 85;
+          bool light2_on = (id(light_2_state).state == "on");
           if (id(selected_device) == 2) {
             it.filled_circle(dev2_x, dev2_y, 22, id(color_accent));
+          } else if (light2_on) {
+            it.filled_circle(dev2_x, dev2_y, 22, id(color_primary));
           } else {
             it.circle(dev2_x, dev2_y, 22, id(color_secondary));
           }
-          it.print(dev2_x, dev2_y - 4, id(font_small), id(selected_device) == 2 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "Bed");
-          it.print(dev2_x, dev2_y + 8, id(font_small), id(selected_device) == 2 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "2");
+          it.print(dev2_x, dev2_y - 4, id(font_small), (id(selected_device) == 2 || light2_on) ? id(color_background) : id(color_secondary), TextAlign::CENTER, "${light_2_name}");
+          it.print(dev2_x, dev2_y + 8, id(font_small), (id(selected_device) == 2 || light2_on) ? id(color_background) : id(color_secondary), TextAlign::CENTER, "2");
 
-          // Device 3 - Kitchen Light (bottom-right)
+          // Device 3 - Light 3 (bottom-right)
           int dev3_x = 170, dev3_y = 155;
+          bool light3_on = (id(light_3_state).state == "on");
           if (id(selected_device) == 3) {
             it.filled_circle(dev3_x, dev3_y, 22, id(color_accent));
+          } else if (light3_on) {
+            it.filled_circle(dev3_x, dev3_y, 22, id(color_primary));
           } else {
             it.circle(dev3_x, dev3_y, 22, id(color_secondary));
           }
-          it.print(dev3_x, dev3_y - 4, id(font_small), id(selected_device) == 3 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "Kit");
-          it.print(dev3_x, dev3_y + 8, id(font_small), id(selected_device) == 3 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "3");
+          it.print(dev3_x, dev3_y - 4, id(font_small), (id(selected_device) == 3 || light3_on) ? id(color_background) : id(color_secondary), TextAlign::CENTER, "${light_3_name}");
+          it.print(dev3_x, dev3_y + 8, id(font_small), (id(selected_device) == 3 || light3_on) ? id(color_background) : id(color_secondary), TextAlign::CENTER, "3");
 
-          // Device 4 - Living Room Light (bottom)
+          // Device 4 - Light 4 (bottom)
           int dev4_x = 120, dev4_y = 180;
+          bool light4_on = (id(light_4_state).state == "on");
           if (id(selected_device) == 4) {
             it.filled_circle(dev4_x, dev4_y, 22, id(color_accent));
+          } else if (light4_on) {
+            it.filled_circle(dev4_x, dev4_y, 22, id(color_primary));
           } else {
             it.circle(dev4_x, dev4_y, 22, id(color_secondary));
           }
-          it.print(dev4_x, dev4_y - 4, id(font_small), id(selected_device) == 4 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "Live");
-          it.print(dev4_x, dev4_y + 8, id(font_small), id(selected_device) == 4 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "4");
+          it.print(dev4_x, dev4_y - 4, id(font_small), (id(selected_device) == 4 || light4_on) ? id(color_background) : id(color_secondary), TextAlign::CENTER, "${light_4_name}");
+          it.print(dev4_x, dev4_y + 8, id(font_small), (id(selected_device) == 4 || light4_on) ? id(color_background) : id(color_secondary), TextAlign::CENTER, "4");
 
           // Device 5 - Climate (bottom-left)
           int dev5_x = 70, dev5_y = 155;
@@ -745,18 +777,21 @@ display:
           } else {
             it.circle(dev5_x, dev5_y, 22, id(color_secondary));
           }
-          it.print(dev5_x, dev5_y - 4, id(font_small), id(selected_device) == 5 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "Clim");
+          it.print(dev5_x, dev5_y - 4, id(font_small), id(selected_device) == 5 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "${climate_name}");
           it.print(dev5_x, dev5_y + 8, id(font_small), id(selected_device) == 5 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "5");
 
-          // Device 6 - Coffee Maker Switch (top-left)
+          // Device 6 - Switch 1 (top-left)
           int dev6_x = 70, dev6_y = 85;
+          bool switch_on = (id(switch_1_state).state == "on");
           if (id(selected_device) == 6) {
             it.filled_circle(dev6_x, dev6_y, 22, id(color_accent));
+          } else if (switch_on) {
+            it.filled_circle(dev6_x, dev6_y, 22, id(color_primary));
           } else {
             it.circle(dev6_x, dev6_y, 22, id(color_secondary));
           }
-          it.print(dev6_x, dev6_y - 4, id(font_small), id(selected_device) == 6 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "Coff");
-          it.print(dev6_x, dev6_y + 8, id(font_small), id(selected_device) == 6 ? id(color_background) : id(color_secondary), TextAlign::CENTER, "6");
+          it.print(dev6_x, dev6_y - 4, id(font_small), (id(selected_device) == 6 || switch_on) ? id(color_background) : id(color_secondary), TextAlign::CENTER, "${switch_1_name}");
+          it.print(dev6_x, dev6_y + 8, id(font_small), (id(selected_device) == 6 || switch_on) ? id(color_background) : id(color_secondary), TextAlign::CENTER, "6");
 
           // Instructions
           it.print(120, 215, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Turn to select, press to control");
@@ -779,10 +814,10 @@ display:
 
             // Show which light is selected
             std::string light_name = "";
-            if (id(selected_device) == 1) light_name = "Desk";
-            else if (id(selected_device) == 2) light_name = "Bedroom";
-            else if (id(selected_device) == 3) light_name = "Kitchen";
-            else if (id(selected_device) == 4) light_name = "Living";
+            if (id(selected_device) == 1) light_name = "${light_1_name}";
+            else if (id(selected_device) == 2) light_name = "${light_2_name}";
+            else if (id(selected_device) == 3) light_name = "${light_3_name}";
+            else if (id(selected_device) == 4) light_name = "${light_4_name}";
             it.print(120, 65, id(font_small), id(color_accent), TextAlign::TOP_CENTER, light_name.c_str());
 
             // Get brightness for selected light
