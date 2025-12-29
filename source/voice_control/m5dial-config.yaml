@@ -44,7 +44,7 @@ esp32:
 
 # Use external GC9A01 component for better display support
 external_components:
-  - source: github://pr#7318
+  - source: github://esphome/esphome@dev
     components: [ gc9a01 ]
     refresh: 1d
 
