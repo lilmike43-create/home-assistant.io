@@ -476,8 +476,10 @@ binary_sensor:
             if (id(control_mode) == 0) {
               if (id(selected_device) <= 4) {
                 id(control_mode) = 1;  // Brightness mode for lights
+                id(dial_display).show_page(id(control_page));
               } else if (id(selected_device) == 5) {
                 id(control_mode) = 3;  // Climate mode
+                id(dial_display).show_page(id(control_page));
               } else if (id(selected_device) == 6) {
                 // Toggle switch directly and stay on home page
                 // No mode change, just toggle
@@ -486,6 +488,7 @@ binary_sensor:
             // Any other mode: Return to home
             else {
               id(control_mode) = 0;
+              id(dial_display).show_page(id(home_page));
             }
         # Toggle switch if device 6 is selected
         - if:
@@ -510,6 +513,7 @@ binary_sensor:
       - lambda: |-
           id(control_mode) = 0;
           id(inactivity_time) = 0;
+          id(dial_display).show_page(id(home_page));
 
   # Touchscreen - Color mode button (when in brightness mode)
   - platform: touchscreen
