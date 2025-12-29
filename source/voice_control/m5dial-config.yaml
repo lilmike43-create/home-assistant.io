@@ -8,27 +8,35 @@ substitutions:
   device_name: m5dial-controller
   friendly_name: M5Dial Controller
 
-  # ⚠️ IMPORTANT: When you change an entity below, ALSO change its display name!
-  # Example: If you change light_1 to "light.kitchen", change light_1_name to "Kit" or "Kitch"
+  ################################################################################
+  # ⚠️ CRITICAL: Entities & Display Names Work Together!
+  ################################################################################
+  # When customizing, you MUST update BOTH sections:
+  #
+  # Step 1: Change entity ID below          ↓
+  # Step 2: Change display name below       ↓
+  # Step 3: Recompile & upload firmware     ↓
+  #
+  # EXAMPLE - To change Device 1 from Desk Lamp to Kitchen:
+  #   light_1: "light.kitchen"              ← Change this
+  #   light_1_name: "Kit"                   ← AND change this (4-5 chars max)
+  ################################################################################
 
-  # Home Assistant light entities (customize these!)
+  # Home Assistant Entities - Change these to YOUR entity IDs
   light_1: "light.desk_lamp"
   light_2: "light.bedroom"
   light_3: "light.kitchen"
   light_4: "light.living_room"
-
-  # Other entities
   climate_entity: "climate.living_room"
   switch_1: "switch.coffee_maker"
 
-  # ⚠️ Display names - MUST UPDATE THESE when you change entities above!
-  # Keep names SHORT (4-5 characters max) for best display on circular screen
-  light_1_name: "Desk"
-  light_2_name: "Bed"
-  light_3_name: "Kit"
-  light_4_name: "Live"
-  climate_name: "Clim"
-  switch_1_name: "Coff"
+  # Display Names - Change these to match YOUR entities above (SHORT names!)
+  light_1_name: "Desk"      # Device 1 name (max 4-5 characters)
+  light_2_name: "Bed"       # Device 2 name
+  light_3_name: "Kit"       # Device 3 name
+  light_4_name: "Live"      # Device 4 name
+  climate_name: "Clim"      # Device 5 name
+  switch_1_name: "Coff"     # Device 6 name
 
   # Display colors
   background_color: '000000'
