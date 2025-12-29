@@ -503,6 +503,7 @@ display:
     cs_pin: GPIO7
     dc_pin: GPIO4
     reset_pin: GPIO8
+    invert_colors: false
     update_interval: 200ms
     rotation: 0
     lambda: |-
