@@ -502,12 +502,15 @@ display:
     cs_pin: GPIO7
     dc_pin: GPIO4
     reset_pin: GPIO8
-    invert_colors: true
+    invert_colors: false
     update_interval: 200ms
     rotation: 0
     lambda: |-
-      // Clear screen
-      it.fill(Color(0, 0, 0));
+      // Fill with white to test display
+      it.fill(Color(255, 255, 255));
+
+      // Draw a red rectangle to verify display is working
+      it.filled_rectangle(50, 50, 140, 140, Color(255, 0, 0));
 
       //===========================================
       // WIFI SETUP MODE DISPLAY
