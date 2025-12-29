@@ -235,14 +235,16 @@ sensor:
         - rtttl.play: ${menu_sound}
         - lambda: |-
             id(inactivity_time) = 0;
+            ESP_LOGD("m5dial", "Encoder clockwise - Mode: %d, Device: %d", id(control_mode), id(selected_device));
 
             // Mode 0: Device selection - cycle through devices
             if (id(control_mode) == 0) {
               id(selected_device) = (id(selected_device) % 6) + 1;
+              ESP_LOGD("m5dial", "Device selection mode - now on device %d", id(selected_device));
             }
             // Mode 1: Brightness control
             else if (id(control_mode) == 1) {
-              // Brightness +10% for selected light
+              ESP_LOGD("m5dial", "Brightness mode - will increase brightness");
             }
             // Mode 2: RGB Color picker - adjust current channel
             else if (id(control_mode) == 2) {
@@ -255,6 +257,9 @@ sensor:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 1;'
             then:
+              - logger.log:
+                  format: "Increasing brightness for light.smart_led_light"
+                  level: DEBUG
               - homeassistant.action:
                   service: light.turn_on
                   data:
@@ -264,6 +269,9 @@ sensor:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 2;'
             then:
+              - logger.log:
+                  format: "Increasing brightness for light.office"
+                  level: DEBUG
               - homeassistant.action:
                   service: light.turn_on
                   data:
@@ -273,6 +281,9 @@ sensor:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 3;'
             then:
+              - logger.log:
+                  format: "Increasing brightness for light.kitchen"
+                  level: DEBUG
               - homeassistant.action:
                   service: light.turn_on
                   data:
@@ -282,6 +293,9 @@ sensor:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 4;'
             then:
+              - logger.log:
+                  format: "Increasing brightness for light.living_room"
+                  level: DEBUG
               - homeassistant.action:
                   service: light.turn_on
                   data:
@@ -472,22 +486,27 @@ binary_sensor:
         - rtttl.play: ${menu_sound}
         - lambda: |-
             id(inactivity_time) = 0;
+            ESP_LOGD("m5dial", "Encoder button pressed - Current mode: %d, Device: %d", id(control_mode), id(selected_device));
 
             // Mode 0 (device select): Enter control mode
             if (id(control_mode) == 0) {
               if (id(selected_device) <= 4) {
                 id(control_mode) = 1;  // Brightness mode for lights
+                ESP_LOGD("m5dial", "Entering brightness control mode for light %d", id(selected_device));
                 id(dial_display).show_page(id(control_page));
               } else if (id(selected_device) == 5) {
                 id(control_mode) = 3;  // Climate mode
+                ESP_LOGD("m5dial", "Entering climate control mode");
                 id(dial_display).show_page(id(control_page));
               } else if (id(selected_device) == 6) {
                 // Toggle switch directly and stay on home page
                 // No mode change, just toggle
+                ESP_LOGD("m5dial", "Toggling switch");
               }
             }
             // Any other mode: Return to home
             else {
+              ESP_LOGD("m5dial", "Returning to device selection mode (home)");
               id(control_mode) = 0;
               id(dial_display).show_page(id(home_page));
             }
@@ -540,6 +559,8 @@ binary_sensor:
     y_min: 0
     y_max: 70
     on_press:
+      - lambda: |-
+          ESP_LOGD("m5dial", "Top-right button pressed - Mode: %d, Device: %d", id(control_mode), id(selected_device));
       # Mode 2: Apply RGB color - using script
       - if:
           condition:
@@ -594,6 +615,9 @@ binary_sensor:
           condition:
             lambda: 'return id(control_mode) == 1 && id(selected_device) == 1;'
           then:
+            - logger.log:
+                format: "Toggling light.smart_led_light"
+                level: DEBUG
             - homeassistant.action:
                 service: light.toggle
                 data:
@@ -602,6 +626,9 @@ binary_sensor:
           condition:
             lambda: 'return id(control_mode) == 1 && id(selected_device) == 2;'
           then:
+            - logger.log:
+                format: "Toggling light.office"
+                level: DEBUG
             - homeassistant.action:
                 service: light.toggle
                 data:
@@ -610,6 +637,9 @@ binary_sensor:
           condition:
             lambda: 'return id(control_mode) == 1 && id(selected_device) == 3;'
           then:
+            - logger.log:
+                format: "Toggling light.kitchen"
+                level: DEBUG
             - homeassistant.action:
                 service: light.toggle
                 data:
@@ -618,6 +648,9 @@ binary_sensor:
           condition:
             lambda: 'return id(control_mode) == 1 && id(selected_device) == 4;'
           then:
+            - logger.log:
+                format: "Toggling light.living_room"
+                level: DEBUG
             - homeassistant.action:
                 service: light.toggle
                 data:
