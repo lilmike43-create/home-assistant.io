@@ -255,58 +255,38 @@ sensor:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 1;'
             then:
-              - lambda: |-
-                  int current = (int)id(light_1_brightness).state;
-                  int new_val = current + 26;
-                  if (new_val > 255) new_val = 255;
-
-                  api::HomeassistantActionRequest req;
-                  req.service = "light.turn_on";
-                  req.data["entity_id"] = "${light_1}";
-                  req.data["brightness"] = to_string(new_val);
-                  id(api_server).send_homeassistant_action(req);
+              - homeassistant.action:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.smart_led_light
+                    brightness_step: 26
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 2;'
             then:
-              - lambda: |-
-                  int current = (int)id(light_2_brightness).state;
-                  int new_val = current + 26;
-                  if (new_val > 255) new_val = 255;
-
-                  api::HomeassistantActionRequest req;
-                  req.service = "light.turn_on";
-                  req.data["entity_id"] = "${light_2}";
-                  req.data["brightness"] = to_string(new_val);
-                  id(api_server).send_homeassistant_action(req);
+              - homeassistant.action:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office
+                    brightness_step: 26
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 3;'
             then:
-              - lambda: |-
-                  int current = (int)id(light_3_brightness).state;
-                  int new_val = current + 26;
-                  if (new_val > 255) new_val = 255;
-
-                  api::HomeassistantActionRequest req;
-                  req.service = "light.turn_on";
-                  req.data["entity_id"] = "${light_3}";
-                  req.data["brightness"] = to_string(new_val);
-                  id(api_server).send_homeassistant_action(req);
+              - homeassistant.action:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.kitchen
+                    brightness_step: 26
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 4;'
             then:
-              - lambda: |-
-                  int current = (int)id(light_4_brightness).state;
-                  int new_val = current + 26;
-                  if (new_val > 255) new_val = 255;
-
-                  api::HomeassistantActionRequest req;
-                  req.service = "light.turn_on";
-                  req.data["entity_id"] = "${light_4}";
-                  req.data["brightness"] = to_string(new_val);
-                  id(api_server).send_homeassistant_action(req);
+              - homeassistant.action:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.living_room
+                    brightness_step: 26
         # Climate control
         - if:
             condition:
@@ -345,58 +325,38 @@ sensor:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 1;'
             then:
-              - lambda: |-
-                  int current = (int)id(light_1_brightness).state;
-                  int new_val = current - 26;
-                  if (new_val < 0) new_val = 0;
-
-                  api::HomeassistantActionRequest req;
-                  req.service = "light.turn_on";
-                  req.data["entity_id"] = "${light_1}";
-                  req.data["brightness"] = to_string(new_val);
-                  id(api_server).send_homeassistant_action(req);
+              - homeassistant.action:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.smart_led_light
+                    brightness_step: -26
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 2;'
             then:
-              - lambda: |-
-                  int current = (int)id(light_2_brightness).state;
-                  int new_val = current - 26;
-                  if (new_val < 0) new_val = 0;
-
-                  api::HomeassistantActionRequest req;
-                  req.service = "light.turn_on";
-                  req.data["entity_id"] = "${light_2}";
-                  req.data["brightness"] = to_string(new_val);
-                  id(api_server).send_homeassistant_action(req);
+              - homeassistant.action:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.office
+                    brightness_step: -26
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 3;'
             then:
-              - lambda: |-
-                  int current = (int)id(light_3_brightness).state;
-                  int new_val = current - 26;
-                  if (new_val < 0) new_val = 0;
-
-                  api::HomeassistantActionRequest req;
-                  req.service = "light.turn_on";
-                  req.data["entity_id"] = "${light_3}";
-                  req.data["brightness"] = to_string(new_val);
-                  id(api_server).send_homeassistant_action(req);
+              - homeassistant.action:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.kitchen
+                    brightness_step: -26
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 4;'
             then:
-              - lambda: |-
-                  int current = (int)id(light_4_brightness).state;
-                  int new_val = current - 26;
-                  if (new_val < 0) new_val = 0;
-
-                  api::HomeassistantActionRequest req;
-                  req.service = "light.turn_on";
-                  req.data["entity_id"] = "${light_4}";
-                  req.data["brightness"] = to_string(new_val);
-                  id(api_server).send_homeassistant_action(req);
+              - homeassistant.action:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.living_room
+                    brightness_step: -26
         # Climate control
         - if:
             condition:
@@ -580,104 +540,88 @@ binary_sensor:
     y_min: 0
     y_max: 70
     on_press:
-      # Mode 2: Apply RGB color
+      # Mode 2: Apply RGB color - using script
       - if:
           condition:
             lambda: 'return id(control_mode) == 2 && id(selected_device) == 1;'
           then:
-            - lambda: |-
-                char color_buf[32];
-                sprintf(color_buf, "[%d,%d,%d]", id(rgb_red), id(rgb_green), id(rgb_blue));
-
-                api::HomeassistantActionRequest req;
-                req.service = "light.turn_on";
-                req.data["entity_id"] = "${light_1}";
-                req.data["rgb_color"] = std::string(color_buf);
-                id(api_server).send_homeassistant_action(req);
-
-                id(control_mode) = 1;  // Return to brightness mode
+            - homeassistant.action:
+                service: script.m5dial_set_light_color
+                data:
+                  entity_id: light.smart_led_light
+                  r: !lambda 'return id(rgb_red);'
+                  g: !lambda 'return id(rgb_green);'
+                  b: !lambda 'return id(rgb_blue);'
+            - lambda: 'id(control_mode) = 1;'
       - if:
           condition:
             lambda: 'return id(control_mode) == 2 && id(selected_device) == 2;'
           then:
-            - lambda: |-
-                char color_buf[32];
-                sprintf(color_buf, "[%d,%d,%d]", id(rgb_red), id(rgb_green), id(rgb_blue));
-
-                api::HomeassistantActionRequest req;
-                req.service = "light.turn_on";
-                req.data["entity_id"] = "${light_2}";
-                req.data["rgb_color"] = std::string(color_buf);
-                id(api_server).send_homeassistant_action(req);
-
-                id(control_mode) = 1;  // Return to brightness mode
+            - homeassistant.action:
+                service: script.m5dial_set_light_color
+                data:
+                  entity_id: light.office
+                  r: !lambda 'return id(rgb_red);'
+                  g: !lambda 'return id(rgb_green);'
+                  b: !lambda 'return id(rgb_blue);'
+            - lambda: 'id(control_mode) = 1;'
       - if:
           condition:
             lambda: 'return id(control_mode) == 2 && id(selected_device) == 3;'
           then:
-            - lambda: |-
-                char color_buf[32];
-                sprintf(color_buf, "[%d,%d,%d]", id(rgb_red), id(rgb_green), id(rgb_blue));
-
-                api::HomeassistantActionRequest req;
-                req.service = "light.turn_on";
-                req.data["entity_id"] = "${light_3}";
-                req.data["rgb_color"] = std::string(color_buf);
-                id(api_server).send_homeassistant_action(req);
-
-                id(control_mode) = 1;  // Return to brightness mode
+            - homeassistant.action:
+                service: script.m5dial_set_light_color
+                data:
+                  entity_id: light.kitchen
+                  r: !lambda 'return id(rgb_red);'
+                  g: !lambda 'return id(rgb_green);'
+                  b: !lambda 'return id(rgb_blue);'
+            - lambda: 'id(control_mode) = 1;'
       - if:
           condition:
             lambda: 'return id(control_mode) == 2 && id(selected_device) == 4;'
           then:
-            - lambda: |-
-                char color_buf[32];
-                sprintf(color_buf, "[%d,%d,%d]", id(rgb_red), id(rgb_green), id(rgb_blue));
-
-                api::HomeassistantActionRequest req;
-                req.service = "light.turn_on";
-                req.data["entity_id"] = "${light_4}";
-                req.data["rgb_color"] = std::string(color_buf);
-                id(api_server).send_homeassistant_action(req);
-
-                id(control_mode) = 1;  // Return to brightness mode
+            - homeassistant.action:
+                service: script.m5dial_set_light_color
+                data:
+                  entity_id: light.living_room
+                  r: !lambda 'return id(rgb_red);'
+                  g: !lambda 'return id(rgb_green);'
+                  b: !lambda 'return id(rgb_blue);'
+            - lambda: 'id(control_mode) = 1;'
       # Mode 1: Light ON/OFF toggle
       - if:
           condition:
             lambda: 'return id(control_mode) == 1 && id(selected_device) == 1;'
           then:
-            - lambda: |-
-                api::HomeassistantActionRequest req;
-                req.service = "light.toggle";
-                req.data["entity_id"] = "${light_1}";
-                id(api_server).send_homeassistant_action(req);
+            - homeassistant.action:
+                service: light.toggle
+                data:
+                  entity_id: light.smart_led_light
       - if:
           condition:
             lambda: 'return id(control_mode) == 1 && id(selected_device) == 2;'
           then:
-            - lambda: |-
-                api::HomeassistantActionRequest req;
-                req.service = "light.toggle";
-                req.data["entity_id"] = "${light_2}";
-                id(api_server).send_homeassistant_action(req);
+            - homeassistant.action:
+                service: light.toggle
+                data:
+                  entity_id: light.office
       - if:
           condition:
             lambda: 'return id(control_mode) == 1 && id(selected_device) == 3;'
           then:
-            - lambda: |-
-                api::HomeassistantActionRequest req;
-                req.service = "light.toggle";
-                req.data["entity_id"] = "${light_3}";
-                id(api_server).send_homeassistant_action(req);
+            - homeassistant.action:
+                service: light.toggle
+                data:
+                  entity_id: light.kitchen
       - if:
           condition:
             lambda: 'return id(control_mode) == 1 && id(selected_device) == 4;'
           then:
-            - lambda: |-
-                api::HomeassistantActionRequest req;
-                req.service = "light.toggle";
-                req.data["entity_id"] = "${light_4}";
-                id(api_server).send_homeassistant_action(req);
+            - homeassistant.action:
+                service: light.toggle
+                data:
+                  entity_id: light.living_room
       - rtttl.play: ${menu_sound}
 
   # Touchscreen - Switch RGB channel (bottom center, when in color picker)

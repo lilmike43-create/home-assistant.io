@@ -1,0 +1,41 @@
+# Add this script to your Home Assistant configuration.yaml or scripts.yaml
+# This script is required for the M5Dial RGB color picker to work
+
+m5dial_set_light_color:
+  alias: "M5Dial Set Light Color"
+  description: "Set RGB color for a light from M5Dial"
+  fields:
+    entity_id:
+      description: "The light entity to control"
+      example: "light.desk_lamp"
+      required: true
+      selector:
+        entity:
+          domain: light
+    r:
+      description: "Red value (0-255)"
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 255
+    g:
+      description: "Green value (0-255)"
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 255
+    b:
+      description: "Blue value (0-255)"
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 255
+  sequence:
+    - service: light.turn_on
+      target:
+        entity_id: "{{ entity_id }}"
+      data:
+        rgb_color: ["{{ r }}", "{{ g }}", "{{ b }}"]
