@@ -8,6 +8,9 @@ substitutions:
   device_name: m5dial-controller
   friendly_name: M5Dial Controller
 
+  # ⚠️ IMPORTANT: When you change an entity below, ALSO change its display name!
+  # Example: If you change light_1 to "light.kitchen", change light_1_name to "Kit" or "Kitch"
+
   # Home Assistant light entities (customize these!)
   light_1: "light.desk_lamp"
   light_2: "light.bedroom"
@@ -18,7 +21,8 @@ substitutions:
   climate_entity: "climate.living_room"
   switch_1: "switch.coffee_maker"
 
-  # Display names for devices (short names, max 4-5 characters for best display)
+  # ⚠️ Display names - MUST UPDATE THESE when you change entities above!
+  # Keep names SHORT (4-5 characters max) for best display on circular screen
   light_1_name: "Desk"
   light_2_name: "Bed"
   light_3_name: "Kit"
@@ -708,8 +712,19 @@ display:
           // Background
           it.filled_circle(120, 120, 120, id(color_background));
 
-          // Title
-          it.print(120, 15, id(font_medium), id(color_primary), TextAlign::TOP_CENTER, "SELECT DEVICE");
+          // Curved title text along top arc - "SELECT DEVICE"
+          const char* title = "SELECT DEVICE";
+          int title_len = strlen(title);
+          float title_spacing = 5.5;  // Degrees between characters
+          float title_start_angle = -90 - (title_len * title_spacing / 2);  // Center the text
+          int title_radius = 105;
+          for (int i = 0; i < title_len; i++) {
+            float angle = (title_start_angle + i * title_spacing) * 0.01745329;
+            int x = 120 + (int)(title_radius * cos(angle));
+            int y = 120 + (int)(title_radius * sin(angle));
+            char str[2] = {title[i], '\0'};
+            it.print(x, y, id(font_medium), id(color_primary), TextAlign::CENTER, str);
+          }
 
           // Center circle for selected device
           it.filled_circle(120, 120, 35, id(color_primary));
@@ -793,8 +808,19 @@ display:
           it.print(dev6_x, dev6_y - 4, id(font_small), (id(selected_device) == 6 || switch_on) ? id(color_background) : id(color_secondary), TextAlign::CENTER, "${switch_1_name}");
           it.print(dev6_x, dev6_y + 8, id(font_small), (id(selected_device) == 6 || switch_on) ? id(color_background) : id(color_secondary), TextAlign::CENTER, "6");
 
-          // Instructions
-          it.print(120, 215, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Turn to select, press to control");
+          // Curved instructions text along bottom arc
+          const char* instructions = "Turn-select Press-control";
+          int inst_len = strlen(instructions);
+          float inst_spacing = 3.8;  // Degrees between characters
+          float inst_start_angle = 90 - (inst_len * inst_spacing / 2);  // Center the text at bottom
+          int inst_radius = 108;
+          for (int i = 0; i < inst_len; i++) {
+            float angle = (inst_start_angle + i * inst_spacing) * 0.01745329;
+            int x = 120 + (int)(inst_radius * cos(angle));
+            int y = 120 + (int)(inst_radius * sin(angle));
+            char str[2] = {instructions[i], '\0'};
+            it.print(x, y, id(font_small), id(color_secondary), TextAlign::CENTER, str);
+          }
 
       ###################
       # CONTROL PAGE
