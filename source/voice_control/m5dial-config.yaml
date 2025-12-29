@@ -8,15 +8,23 @@ substitutions:
   device_name: m5dial-controller
   friendly_name: M5Dial Controller
 
-  # Home Assistant entities to control
-  light_entity: "light.living_room"
-  media_player_entity: "media_player.living_room_speaker"
+  # Home Assistant light entities (customize these!)
+  light_1: "light.desk_lamp"
+  light_2: "light.bedroom"
+  light_3: "light.kitchen"
+  light_4: "light.living_room"
+
+  # Other entities
   climate_entity: "climate.living_room"
+  switch_1: "switch.coffee_maker"
 
   # Display colors
   background_color: '000000'
-  primary_color: '00A8E8'
-  secondary_color: 'FFFFFF'
+  primary_color: 'FF8C00'      # Orange
+  secondary_color: 'FFFFFF'    # White
+  accent_color: '00D9FF'       # Cyan
+  color_warm: 'FFB366'         # Warm white
+  color_cool: '66B3FF'         # Cool white
 
   # Sounds
   menu_sound: 'beep:d=64,o=5,b=255:c7'
@@ -151,13 +159,41 @@ rtttl:
 ###################
 
 globals:
-  # Current control mode: 0=home, 1=light, 2=media, 3=climate
+  # Selected device (1-4 for lights, 5 for climate, 6 for switch)
+  - id: selected_device
+    type: int
+    restore_value: true
+    initial_value: '1'
+
+  # Control mode: 0=device_select, 1=brightness, 2=color_picker, 3=climate
   - id: control_mode
     type: int
     restore_value: false
     initial_value: '0'
 
-  # Inactivity timer for screen saver
+  # RGB color values for color picker (0-255)
+  - id: rgb_red
+    type: int
+    restore_value: false
+    initial_value: '255'
+
+  - id: rgb_green
+    type: int
+    restore_value: false
+    initial_value: '255'
+
+  - id: rgb_blue
+    type: int
+    restore_value: false
+    initial_value: '255'
+
+  # Color channel being adjusted: 0=red, 1=green, 2=blue
+  - id: color_channel
+    type: int
+    restore_value: false
+    initial_value: '0'
+
+  # Inactivity timer
   - id: inactivity_time
     type: int
     restore_value: false
@@ -178,35 +214,63 @@ sensor:
         - rtttl.play: ${menu_sound}
         - lambda: |-
             id(inactivity_time) = 0;
+
+            // Mode 0: Device selection - cycle through devices
+            if (id(control_mode) == 0) {
+              id(selected_device) = (id(selected_device) % 6) + 1;
+            }
+            // Mode 1: Brightness control
+            else if (id(control_mode) == 1) {
+              // Brightness +10% for selected light
+            }
+            // Mode 2: RGB Color picker - adjust current channel
+            else if (id(control_mode) == 2) {
+              if (id(color_channel) == 0) id(rgb_red) = min(255, id(rgb_red) + 10);
+              else if (id(color_channel) == 1) id(rgb_green) = min(255, id(rgb_green) + 10);
+              else if (id(color_channel) == 2) id(rgb_blue) = min(255, id(rgb_blue) + 10);
+            }
+        # Brightness control for each light
         - if:
             condition:
-              lambda: 'return id(control_mode) == 1;'
+              lambda: 'return id(control_mode) == 1 && id(selected_device) == 1;'
             then:
-              # Light brightness +10%
               - homeassistant.action:
                   service: light.turn_on
                   data:
-                    entity_id: ${light_entity}
+                    entity_id: ${light_1}
                     brightness_step_pct: '10'
         - if:
             condition:
-              lambda: 'return id(control_mode) == 2;'
+              lambda: 'return id(control_mode) == 1 && id(selected_device) == 2;'
             then:
-              # Media volume +5%
               - homeassistant.action:
-                  service: media_player.volume_set
+                  service: light.turn_on
                   data:
-                    entity_id: ${media_player_entity}
-                  data_template:
-                    volume_level: '{{ my_variable | float }}'
-                  variables:
-                    my_variable: |-
-                      return id(media_volume).state + 0.05;
+                    entity_id: ${light_2}
+                    brightness_step_pct: '10'
+        - if:
+            condition:
+              lambda: 'return id(control_mode) == 1 && id(selected_device) == 3;'
+            then:
+              - homeassistant.action:
+                  service: light.turn_on
+                  data:
+                    entity_id: ${light_3}
+                    brightness_step_pct: '10'
+        - if:
+            condition:
+              lambda: 'return id(control_mode) == 1 && id(selected_device) == 4;'
+            then:
+              - homeassistant.action:
+                  service: light.turn_on
+                  data:
+                    entity_id: ${light_4}
+                    brightness_step_pct: '10'
+        # Climate control
         - if:
             condition:
               lambda: 'return id(control_mode) == 3;'
             then:
-              # Climate temperature +1°C
               - homeassistant.action:
                   service: climate.set_temperature
                   data:
@@ -222,35 +286,61 @@ sensor:
         - rtttl.play: ${menu_sound}
         - lambda: |-
             id(inactivity_time) = 0;
+
+            // Mode 0: Device selection - cycle backwards
+            if (id(control_mode) == 0) {
+              id(selected_device) = id(selected_device) - 1;
+              if (id(selected_device) < 1) id(selected_device) = 6;
+            }
+            // Mode 1: Brightness control (handled by actions below)
+            // Mode 2: RGB Color picker - decrease current channel
+            else if (id(control_mode) == 2) {
+              if (id(color_channel) == 0) id(rgb_red) = max(0, id(rgb_red) - 10);
+              else if (id(color_channel) == 1) id(rgb_green) = max(0, id(rgb_green) - 10);
+              else if (id(color_channel) == 2) id(rgb_blue) = max(0, id(rgb_blue) - 10);
+            }
+        # Brightness control for each light
         - if:
             condition:
-              lambda: 'return id(control_mode) == 1;'
+              lambda: 'return id(control_mode) == 1 && id(selected_device) == 1;'
             then:
-              # Light brightness -10%
               - homeassistant.action:
                   service: light.turn_on
                   data:
-                    entity_id: ${light_entity}
+                    entity_id: ${light_1}
                     brightness_step_pct: '-10'
         - if:
             condition:
-              lambda: 'return id(control_mode) == 2;'
+              lambda: 'return id(control_mode) == 1 && id(selected_device) == 2;'
             then:
-              # Media volume -5%
               - homeassistant.action:
-                  service: media_player.volume_set
+                  service: light.turn_on
                   data:
-                    entity_id: ${media_player_entity}
-                  data_template:
-                    volume_level: '{{ my_variable | float }}'
-                  variables:
-                    my_variable: |-
-                      return id(media_volume).state - 0.05;
+                    entity_id: ${light_2}
+                    brightness_step_pct: '-10'
+        - if:
+            condition:
+              lambda: 'return id(control_mode) == 1 && id(selected_device) == 3;'
+            then:
+              - homeassistant.action:
+                  service: light.turn_on
+                  data:
+                    entity_id: ${light_3}
+                    brightness_step_pct: '-10'
+        - if:
+            condition:
+              lambda: 'return id(control_mode) == 1 && id(selected_device) == 4;'
+            then:
+              - homeassistant.action:
+                  service: light.turn_on
+                  data:
+                    entity_id: ${light_4}
+                    brightness_step_pct: '-10'
+        # Climate control
         - if:
             condition:
               lambda: 'return id(control_mode) == 3;'
             then:
-              # Climate temperature -1°C
               - homeassistant.action:
                   service: climate.set_temperature
                   data:
@@ -261,26 +351,38 @@ sensor:
                     my_variable: |-
                       return id(climate_temperature).state - 1.0;
 
-  # Home Assistant sensors for entity states
+  # Home Assistant sensors for all lights
   - platform: homeassistant
-    id: light_brightness
-    entity_id: ${light_entity}
+    id: light_1_brightness
+    entity_id: ${light_1}
     attribute: brightness
     internal: true
     filters:
-      - lambda: |-
-          if (isnan(x)) { return 0; }
-          else { return x; }
+      - lambda: 'if (isnan(x)) { return 0; } else { return x; }'
 
   - platform: homeassistant
-    id: media_volume
-    entity_id: ${media_player_entity}
-    attribute: volume_level
+    id: light_2_brightness
+    entity_id: ${light_2}
+    attribute: brightness
     internal: true
     filters:
-      - lambda: |-
-          if (isnan(x)) { return 0; }
-          else { return x; }
+      - lambda: 'if (isnan(x)) { return 0; } else { return x; }'
+
+  - platform: homeassistant
+    id: light_3_brightness
+    entity_id: ${light_3}
+    attribute: brightness
+    internal: true
+    filters:
+      - lambda: 'if (isnan(x)) { return 0; } else { return x; }'
+
+  - platform: homeassistant
+    id: light_4_brightness
+    entity_id: ${light_4}
+    attribute: brightness
+    internal: true
+    filters:
+      - lambda: 'if (isnan(x)) { return 0; } else { return x; }'
 
   - platform: homeassistant
     id: climate_temperature
@@ -288,24 +390,32 @@ sensor:
     attribute: temperature
     internal: true
     filters:
-      - lambda: |-
-          if (isnan(x)) { return 20; }
-          else { return x; }
+      - lambda: 'if (isnan(x)) { return 20; } else { return x; }'
 
 ###################
 # TEXT SENSORS
 ###################
 
 text_sensor:
-  # Entity states
+  # Entity states for all lights
   - platform: homeassistant
-    id: light_state
-    entity_id: ${light_entity}
+    id: light_1_state
+    entity_id: ${light_1}
     internal: true
 
   - platform: homeassistant
-    id: media_state
-    entity_id: ${media_player_entity}
+    id: light_2_state
+    entity_id: ${light_2}
+    internal: true
+
+  - platform: homeassistant
+    id: light_3_state
+    entity_id: ${light_3}
+    internal: true
+
+  - platform: homeassistant
+    id: light_4_state
+    entity_id: ${light_4}
     internal: true
 
   - platform: homeassistant
@@ -313,7 +423,11 @@ text_sensor:
     entity_id: ${climate_entity}
     internal: true
 
-  # WiFi connection status
+  - platform: homeassistant
+    id: switch_1_state
+    entity_id: ${switch_1}
+    internal: true
+
   - platform: wifi_info
     ip_address:
       id: wifi_ip
@@ -338,30 +452,138 @@ binary_sensor:
         - lambda: |-
             id(inactivity_time) = 0;
 
-            // Cycle through modes: 0 -> 1 -> 2 -> 3 -> 0
-            id(control_mode) = (id(control_mode) + 1) % 4;
-
-            // If we're on mode 0, show home page, otherwise control page
+            // Mode 0 (device select): Enter brightness mode
             if (id(control_mode) == 0) {
-              id(dial_display).show_page(id(home_page));
-            } else {
-              id(dial_display).show_page(id(control_page));
+              if (id(selected_device) <= 4) {
+                id(control_mode) = 1;  // Brightness mode for lights
+              } else if (id(selected_device) == 5) {
+                id(control_mode) = 3;  // Climate mode
+              }
+            }
+            // Any other mode: Return to home
+            else {
+              id(control_mode) = 0;
             }
 
-  # Touchscreen buttons
+  # Touchscreen - Home button (always visible)
   - platform: touchscreen
     name: "Home Button"
     internal: true
-    x_min: 70
-    x_max: 170
+    x_min: 80
+    x_max: 160
     y_min: 0
-    y_max: 60
+    y_max: 50
     on_press:
       - rtttl.play: ${menu_sound}
       - lambda: |-
           id(control_mode) = 0;
-          id(dial_display).show_page(id(home_page));
           id(inactivity_time) = 0;
+
+  # Touchscreen - Color mode button (when in brightness mode)
+  - platform: touchscreen
+    name: "Color Mode Button"
+    internal: true
+    x_min: 0
+    x_max: 70
+    y_min: 0
+    y_max: 70
+    on_press:
+      - lambda: |-
+          if (id(control_mode) == 1) {  // Only in brightness mode
+            id(control_mode) = 2;  // Switch to color picker
+            id(color_channel) = 0;  // Start with red channel
+          }
+
+  # Touchscreen - Apply RGB color (when in color picker mode)
+  - platform: touchscreen
+    name: "Apply Color Button"
+    internal: true
+    x_min: 170
+    x_max: 240
+    y_min: 0
+    y_max: 70
+    on_press:
+      - lambda: |-
+          if (id(control_mode) == 2) {  // In color picker mode
+            // Will trigger service call based on selected device
+            id(control_mode) = 1;  // Return to brightness mode
+          }
+      # Apply color to selected light
+      - if:
+          condition:
+            lambda: 'return id(control_mode) == 1 && id(selected_device) == 1;'
+          then:
+            - homeassistant.action:
+                service: light.turn_on
+                data:
+                  entity_id: ${light_1}
+                data_template:
+                  rgb_color: '{{ my_color }}'
+                variables:
+                  my_color: |-
+                    char buf[32];
+                    sprintf(buf, "[%d,%d,%d]", id(rgb_red), id(rgb_green), id(rgb_blue));
+                    return std::string(buf);
+      - if:
+          condition:
+            lambda: 'return id(control_mode) == 1 && id(selected_device) == 2;'
+          then:
+            - homeassistant.action:
+                service: light.turn_on
+                data:
+                  entity_id: ${light_2}
+                data_template:
+                  rgb_color: '{{ my_color }}'
+                variables:
+                  my_color: |-
+                    char buf[32];
+                    sprintf(buf, "[%d,%d,%d]", id(rgb_red), id(rgb_green), id(rgb_blue));
+                    return std::string(buf);
+      - if:
+          condition:
+            lambda: 'return id(control_mode) == 1 && id(selected_device) == 3;'
+          then:
+            - homeassistant.action:
+                service: light.turn_on
+                data:
+                  entity_id: ${light_3}
+                data_template:
+                  rgb_color: '{{ my_color }}'
+                variables:
+                  my_color: |-
+                    char buf[32];
+                    sprintf(buf, "[%d,%d,%d]", id(rgb_red), id(rgb_green), id(rgb_blue));
+                    return std::string(buf);
+      - if:
+          condition:
+            lambda: 'return id(control_mode) == 1 && id(selected_device) == 4;'
+          then:
+            - homeassistant.action:
+                service: light.turn_on
+                data:
+                  entity_id: ${light_4}
+                data_template:
+                  rgb_color: '{{ my_color }}'
+                variables:
+                  my_color: |-
+                    char buf[32];
+                    sprintf(buf, "[%d,%d,%d]", id(rgb_red), id(rgb_green), id(rgb_blue));
+                    return std::string(buf);
+
+  # Touchscreen - Switch RGB channel (bottom center, when in color picker)
+  - platform: touchscreen
+    name: "Next RGB Channel"
+    internal: true
+    x_min: 80
+    x_max: 160
+    y_min: 190
+    y_max: 240
+    on_press:
+      - rtttl.play: ${menu_sound}
+      - lambda: |-
+          if (id(control_mode) == 2) {  // In color picker mode
+            id(color_channel) = (id(color_channel) + 1) % 3;  // Cycle R->G->B->R
+          }
 
 ###################
 # INTERVALS
@@ -401,10 +623,22 @@ color:
     hex: ${primary_color}
   - id: color_secondary
     hex: ${secondary_color}
+  - id: color_accent
+    hex: ${accent_color}
+  - id: color_warm
+    hex: ${color_warm}
+  - id: color_cool
+    hex: ${color_cool}
   - id: color_on
     hex: '00FF00'
   - id: color_off
+    hex: '666666'
+  - id: color_red
     hex: 'FF0000'
+  - id: color_green
+    hex: '00FF00'
+  - id: color_blue
+    hex: '0000FF'
 
 ###################
 # FONTS
