@@ -258,7 +258,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_1}
-                    brightness_step_pct: 10
+                    brightness_step_pct: '10'
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 2;'
@@ -267,7 +267,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_2}
-                    brightness_step_pct: 10
+                    brightness_step_pct: '10'
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 3;'
@@ -276,7 +276,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_3}
-                    brightness_step_pct: 10
+                    brightness_step_pct: '10'
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 4;'
@@ -285,7 +285,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_4}
-                    brightness_step_pct: 10
+                    brightness_step_pct: '10'
         # Climate control
         - if:
             condition:
@@ -328,7 +328,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_1}
-                    brightness_step_pct: -10
+                    brightness_step_pct: '-10'
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 2;'
@@ -337,7 +337,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_2}
-                    brightness_step_pct: -10
+                    brightness_step_pct: '-10'
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 3;'
@@ -346,7 +346,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_3}
-                    brightness_step_pct: -10
+                    brightness_step_pct: '-10'
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 4;'
@@ -355,7 +355,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_4}
-                    brightness_step_pct: -10
+                    brightness_step_pct: '-10'
         # Climate control
         - if:
             condition:
