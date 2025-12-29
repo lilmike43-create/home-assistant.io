@@ -90,6 +90,11 @@ touchscreen:
     id: touchscreen_dial
     i2c_id: internal_i2c
     address: 0x38
+    interrupt_pin: GPIO14
+    transform:
+      swap_xy: false
+      mirror_x: false
+      mirror_y: false
 
 # RTC (Real-Time Clock)
 time:
