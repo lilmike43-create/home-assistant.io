@@ -181,7 +181,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_entity}
-                    brightness_step_pct: 10
+                    brightness_step_pct: '10'
         - if:
             condition:
               lambda: 'return id(control_mode) == 2;'
@@ -225,7 +225,7 @@ sensor:
                   service: light.turn_on
                   data:
                     entity_id: ${light_entity}
-                    brightness_step_pct: -10
+                    brightness_step_pct: '-10'
         - if:
             condition:
               lambda: 'return id(control_mode) == 2;'
