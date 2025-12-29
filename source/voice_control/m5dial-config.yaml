@@ -256,14 +256,13 @@ sensor:
             then:
               - homeassistant.action:
                   service: light.turn_on
-                  data:
-                    entity_id: ${light_1}
                   data_template:
-                    brightness: '{{ new_brightness | int }}'
+                    entity_id: ${light_1}
+                    brightness: '{{ new_brightness }}'
                   variables:
                     new_brightness: |-
                       int current = (int)id(light_1_brightness).state;
-                      int new_val = current + 26;  // +10% of 255 = 26
+                      int new_val = current + 26;
                       if (new_val > 255) new_val = 255;
                       return new_val;
         - if:
@@ -272,10 +271,9 @@ sensor:
             then:
               - homeassistant.action:
                   service: light.turn_on
-                  data:
-                    entity_id: ${light_2}
                   data_template:
-                    brightness: '{{ new_brightness | int }}'
+                    entity_id: ${light_2}
+                    brightness: '{{ new_brightness }}'
                   variables:
                     new_brightness: |-
                       int current = (int)id(light_2_brightness).state;
@@ -288,10 +286,9 @@ sensor:
             then:
               - homeassistant.action:
                   service: light.turn_on
-                  data:
-                    entity_id: ${light_3}
                   data_template:
-                    brightness: '{{ new_brightness | int }}'
+                    entity_id: ${light_3}
+                    brightness: '{{ new_brightness }}'
                   variables:
                     new_brightness: |-
                       int current = (int)id(light_3_brightness).state;
@@ -304,10 +301,9 @@ sensor:
             then:
               - homeassistant.action:
                   service: light.turn_on
-                  data:
-                    entity_id: ${light_4}
                   data_template:
-                    brightness: '{{ new_brightness | int }}'
+                    entity_id: ${light_4}
+                    brightness: '{{ new_brightness }}'
                   variables:
                     new_brightness: |-
                       int current = (int)id(light_4_brightness).state;
@@ -354,14 +350,13 @@ sensor:
             then:
               - homeassistant.action:
                   service: light.turn_on
-                  data:
-                    entity_id: ${light_1}
                   data_template:
-                    brightness: '{{ new_brightness | int }}'
+                    entity_id: ${light_1}
+                    brightness: '{{ new_brightness }}'
                   variables:
                     new_brightness: |-
                       int current = (int)id(light_1_brightness).state;
-                      int new_val = current - 26;  // -10% of 255 = 26
+                      int new_val = current - 26;
                       if (new_val < 0) new_val = 0;
                       return new_val;
         - if:
@@ -370,10 +365,9 @@ sensor:
             then:
               - homeassistant.action:
                   service: light.turn_on
-                  data:
-                    entity_id: ${light_2}
                   data_template:
-                    brightness: '{{ new_brightness | int }}'
+                    entity_id: ${light_2}
+                    brightness: '{{ new_brightness }}'
                   variables:
                     new_brightness: |-
                       int current = (int)id(light_2_brightness).state;
@@ -386,10 +380,9 @@ sensor:
             then:
               - homeassistant.action:
                   service: light.turn_on
-                  data:
-                    entity_id: ${light_3}
                   data_template:
-                    brightness: '{{ new_brightness | int }}'
+                    entity_id: ${light_3}
+                    brightness: '{{ new_brightness }}'
                   variables:
                     new_brightness: |-
                       int current = (int)id(light_3_brightness).state;
@@ -402,10 +395,9 @@ sensor:
             then:
               - homeassistant.action:
                   service: light.turn_on
-                  data:
-                    entity_id: ${light_4}
                   data_template:
-                    brightness: '{{ new_brightness | int }}'
+                    entity_id: ${light_4}
+                    brightness: '{{ new_brightness }}'
                   variables:
                     new_brightness: |-
                       int current = (int)id(light_4_brightness).state;
@@ -602,9 +594,8 @@ binary_sensor:
           then:
             - homeassistant.action:
                 service: light.turn_on
-                data:
-                  entity_id: ${light_1}
                 data_template:
+                  entity_id: ${light_1}
                   rgb_color: '{{ my_color }}'
                 variables:
                   my_color: |-
@@ -617,9 +608,8 @@ binary_sensor:
           then:
             - homeassistant.action:
                 service: light.turn_on
-                data:
-                  entity_id: ${light_2}
                 data_template:
+                  entity_id: ${light_2}
                   rgb_color: '{{ my_color }}'
                 variables:
                   my_color: |-
@@ -632,9 +622,8 @@ binary_sensor:
           then:
             - homeassistant.action:
                 service: light.turn_on
-                data:
-                  entity_id: ${light_3}
                 data_template:
+                  entity_id: ${light_3}
                   rgb_color: '{{ my_color }}'
                 variables:
                   my_color: |-
@@ -647,9 +636,8 @@ binary_sensor:
           then:
             - homeassistant.action:
                 service: light.turn_on
-                data:
-                  entity_id: ${light_4}
                 data_template:
+                  entity_id: ${light_4}
                   rgb_color: '{{ my_color }}'
                 variables:
                   my_color: |-
