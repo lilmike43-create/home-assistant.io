@@ -498,10 +498,12 @@ font:
 ###################
 
 display:
-  - platform: gc9a01
+  - platform: ili9xxx
+    model: GC9A01A
     id: dial_display
     cs_pin: GPIO7
     dc_pin: GPIO4
+    reset_pin: GPIO8
     update_interval: 200ms
     rotation: 0
     lambda: |-
@@ -533,21 +535,15 @@ display:
           // Connected - show current network
           it.print(120, 55, id(font_medium), Color(0, 255, 0), TextAlign::CENTER, "Connected!");
 
-          // Show WiFi network name if available
-          std::string ssid = "${wifi_ssid}";
-          if (!ssid.empty()) {
-            it.printf(120, 85, id(font_small), COLOR_WHITE, TextAlign::CENTER, "Network:");
-            it.printf(120, 105, id(font_medium), Color(100, 200, 255), TextAlign::CENTER, "%s", ssid.c_str());
-          }
-
-          // Show IP address if available
+          // Show IP address
           if (wifi::global_wifi_component->is_connected()) {
-            it.printf(120, 135, id(font_tiny), Color(150, 150, 150), TextAlign::CENTER,
-                     "IP: %s", wifi::global_wifi_component->get_ip_address().str().c_str());
+            it.print(120, 90, id(font_small), Color(150, 150, 150), TextAlign::CENTER, "IP Address:");
+            it.printf(120, 110, id(font_medium), Color(100, 200, 255), TextAlign::CENTER,
+                     "%s", wifi::global_wifi_component->get_ip_address().str().c_str());
           }
 
-          it.print(120, 165, id(font_small), Color(0, 255, 0), TextAlign::CENTER, "Press button or");
-          it.print(120, 185, id(font_small), Color(0, 255, 0), TextAlign::CENTER, "touch to exit");
+          it.print(120, 155, id(font_small), Color(0, 255, 0), TextAlign::CENTER, "Press button or");
+          it.print(120, 175, id(font_small), Color(0, 255, 0), TextAlign::CENTER, "touch to exit");
         }
 
         // Draw flashing WiFi icon area
