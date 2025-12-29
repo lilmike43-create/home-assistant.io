@@ -451,7 +451,6 @@ light:
     rgb_order: GRB
     pin: GPIO21
     num_leds: 1
-    rmt_channel: 0
     chipset: WS2812
     default_transition_length: 0s
     effects:
