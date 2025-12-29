@@ -118,30 +118,37 @@ def check_entity_display_names(config: Dict) -> bool:
     return all_good
 
 def check_brightness_step_format(config_path: Path) -> bool:
-    """Check that brightness_step_pct values are strings"""
-    print_header("Step 3: Checking Brightness Control Format")
+    """Check that brightness control is implemented"""
+    print_header("Step 3: Checking Brightness Control Implementation")
 
     with open(config_path, 'r') as f:
         content = f.read()
 
-    # Look for brightness_step_pct without quotes
-    pattern = r'brightness_step_pct:\s*(-?\d+)\s*$'
-    matches = re.finditer(pattern, content, re.MULTILINE)
-
-    issues = []
-    for match in matches:
-        line_num = content[:match.start()].count('\n') + 1
-        value = match.group(1)
-        issues.append(f"Line {line_num}: brightness_step_pct: {value} should be brightness_step_pct: '{value}'")
-
-    if issues:
-        for issue in issues:
-            print_error(issue)
-        print_error("brightness_step_pct values must be strings (wrapped in quotes)")
-        return False
-    else:
-        print_success("All brightness_step_pct values are properly formatted as strings")
+    # Check for brightness control using calculated values (new method)
+    if 'new_brightness' in content and 'current + 26' in content:
+        print_success("Brightness control using calculated values (recommended)")
         return True
+
+    # Check for old brightness_step_pct method
+    elif 'brightness_step_pct' in content:
+        # Check if values are strings
+        pattern = r'brightness_step_pct:\s*(-?\d+)\s*$'
+        matches = list(re.finditer(pattern, content, re.MULTILINE))
+
+        if matches:
+            print_error("brightness_step_pct found but values are not strings")
+            for match in matches:
+                line_num = content[:match.start()].count('\n') + 1
+                value = match.group(1)
+                print_error(f"Line {line_num}: brightness_step_pct: {value} should be brightness_step_pct: '{value}'")
+            return False
+        else:
+            print_success("Brightness control using brightness_step_pct (strings)")
+            print_warning("Consider upgrading to calculated brightness method for better compatibility")
+            return True
+    else:
+        print_warning("No brightness control implementation found")
+        return False
 
 def check_page_switching(config_path: Path) -> bool:
     """Check that button press includes page switching logic"""
