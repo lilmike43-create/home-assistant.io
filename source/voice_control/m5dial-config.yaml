@@ -507,7 +507,7 @@ display:
     rotation: 0
     lambda: |-
       // Clear screen
-      it.fill(COLOR_BLACK);
+      it.fill(Color(0, 0, 0));
 
       //===========================================
       // WIFI SETUP MODE DISPLAY
@@ -520,12 +520,12 @@ display:
 
         if (!id(wifi_connected).state) {
           // Not connected - show setup instructions
-          it.print(120, 55, id(font_small), COLOR_WHITE, TextAlign::CENTER, "1. Connect WiFi");
+          it.print(120, 55, id(font_small), Color(255, 255, 255), TextAlign::CENTER, "1. Connect WiFi");
           it.print(120, 75, id(font_medium), Color(255, 255, 0), TextAlign::CENTER, "SSID M5Dial Setup");
           it.print(120, 95, id(font_tiny), Color(150, 150, 150), TextAlign::CENTER, "Password m5dial123");
 
-          it.print(120, 120, id(font_small), COLOR_WHITE, TextAlign::CENTER, "2. Open browser");
-          it.print(120, 138, id(font_small), COLOR_WHITE, TextAlign::CENTER, "3. Setup WiFi");
+          it.print(120, 120, id(font_small), Color(255, 255, 255), TextAlign::CENTER, "2. Open browser");
+          it.print(120, 138, id(font_small), Color(255, 255, 255), TextAlign::CENTER, "3. Setup WiFi");
 
           it.print(120, 170, id(font_tiny), Color(200, 200, 200), TextAlign::CENTER, "Or connect via USB");
           it.print(120, 185, id(font_tiny), Color(200, 200, 200), TextAlign::CENTER, "and use Improv");
@@ -537,8 +537,11 @@ display:
           // Show IP address
           if (wifi::global_wifi_component->is_connected()) {
             it.print(120, 90, id(font_small), Color(150, 150, 150), TextAlign::CENTER, "IP Address");
-            it.printf(120, 110, id(font_medium), Color(100, 200, 255), TextAlign::CENTER,
-                     "%s", wifi::global_wifi_component->get_ip_address().str().c_str());
+            auto addresses = wifi::global_wifi_component->get_ip_addresses();
+            if (!addresses.empty()) {
+              it.printf(120, 110, id(font_medium), Color(100, 200, 255), TextAlign::CENTER,
+                       "%s", addresses[0].str().c_str());
+            }
           }
 
           it.print(120, 155, id(font_small), Color(0, 255, 0), TextAlign::CENTER, "Press button or");
@@ -549,7 +552,7 @@ display:
         int blink = (millis() / 500) % 2;
         if (blink) {
           it.filled_circle(120, 215, 10, Color(0, 100, 255));
-          it.print(120, 215, id(font_medium), COLOR_WHITE, TextAlign::CENTER, "W");
+          it.print(120, 215, id(font_medium), Color(255, 255, 255), TextAlign::CENTER, "W");
         } else {
           it.circle(120, 215, 10, Color(0, 100, 255));
         }
@@ -564,7 +567,7 @@ display:
       // Get current value based on mode
       float current_value = 0;
       const char* mode_name = "";
-      Color mode_color = COLOR_WHITE;
+      Color mode_color = Color(255, 255, 255);
       const char* unit = "";
 
       if (id(control_mode) == 0) {
@@ -593,12 +596,12 @@ display:
       // Draw main value
       if (id(control_mode) == 2) {
         // Climate shows decimal
-        it.printf(120, 90, id(font_large), COLOR_WHITE, TextAlign::CENTER, "%.1f", current_value);
-        it.print(180, 100, id(font_medium), COLOR_WHITE, TextAlign::CENTER_LEFT, unit);
+        it.printf(120, 90, id(font_large), Color(255, 255, 255), TextAlign::CENTER, "%.1f", current_value);
+        it.print(180, 100, id(font_medium), Color(255, 255, 255), TextAlign::CENTER_LEFT, unit);
       } else {
         // Light and volume show integers
-        it.printf(120, 90, id(font_large), COLOR_WHITE, TextAlign::CENTER, "%d", (int)current_value);
-        it.print(180, 100, id(font_medium), COLOR_WHITE, TextAlign::CENTER_LEFT, unit);
+        it.printf(120, 90, id(font_large), Color(255, 255, 255), TextAlign::CENTER, "%d", (int)current_value);
+        it.print(180, 100, id(font_medium), Color(255, 255, 255), TextAlign::CENTER_LEFT, unit);
       }
 
       // Draw circular progress indicator
@@ -653,7 +656,7 @@ display:
         int y = 215;
 
         if (i == id(control_mode)) {
-          it.filled_circle(x, y, 6, COLOR_WHITE);
+          it.filled_circle(x, y, 6, Color(255, 255, 255));
         } else {
           it.circle(x, y, 5, Color(80, 80, 80));
           it.filled_circle(x, y, 2, Color(80, 80, 80));
