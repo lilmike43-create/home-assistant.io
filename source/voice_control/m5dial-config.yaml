@@ -249,18 +249,16 @@ sensor:
               else if (id(color_channel) == 1) id(rgb_green) = min(255, id(rgb_green) + 10);
               else if (id(color_channel) == 2) id(rgb_blue) = min(255, id(rgb_blue) + 10);
             }
-        # Brightness control for each light - using calculated values
+        # Brightness control for each light - using calculated values with lambda
         - if:
             condition:
               lambda: 'return id(control_mode) == 1 && id(selected_device) == 1;'
             then:
               - homeassistant.action:
                   service: light.turn_on
-                  data_template:
+                  data:
                     entity_id: ${light_1}
-                    brightness: '{{ new_brightness }}'
-                  variables:
-                    new_brightness: |-
+                    brightness: !lambda |-
                       int current = (int)id(light_1_brightness).state;
                       int new_val = current + 26;
                       if (new_val > 255) new_val = 255;
@@ -271,11 +269,9 @@ sensor:
             then:
               - homeassistant.action:
                   service: light.turn_on
-                  data_template:
+                  data:
                     entity_id: ${light_2}
-                    brightness: '{{ new_brightness }}'
-                  variables:
-                    new_brightness: |-
+                    brightness: !lambda |-
                       int current = (int)id(light_2_brightness).state;
                       int new_val = current + 26;
                       if (new_val > 255) new_val = 255;
@@ -286,11 +282,9 @@ sensor:
             then:
               - homeassistant.action:
                   service: light.turn_on
-                  data_template:
+                  data:
                     entity_id: ${light_3}
-                    brightness: '{{ new_brightness }}'
-                  variables:
-                    new_brightness: |-
+                    brightness: !lambda |-
                       int current = (int)id(light_3_brightness).state;
                       int new_val = current + 26;
                       if (new_val > 255) new_val = 255;
@@ -301,11 +295,9 @@ sensor:
             then:
               - homeassistant.action:
                   service: light.turn_on
-                  data_template:
+                  data:
                     entity_id: ${light_4}
-                    brightness: '{{ new_brightness }}'
-                  variables:
-                    new_brightness: |-
+                    brightness: !lambda |-
                       int current = (int)id(light_4_brightness).state;
                       int new_val = current + 26;
                       if (new_val > 255) new_val = 255;
@@ -350,11 +342,9 @@ sensor:
             then:
               - homeassistant.action:
                   service: light.turn_on
-                  data_template:
+                  data:
                     entity_id: ${light_1}
-                    brightness: '{{ new_brightness }}'
-                  variables:
-                    new_brightness: |-
+                    brightness: !lambda |-
                       int current = (int)id(light_1_brightness).state;
                       int new_val = current - 26;
                       if (new_val < 0) new_val = 0;
@@ -365,11 +355,9 @@ sensor:
             then:
               - homeassistant.action:
                   service: light.turn_on
-                  data_template:
+                  data:
                     entity_id: ${light_2}
-                    brightness: '{{ new_brightness }}'
-                  variables:
-                    new_brightness: |-
+                    brightness: !lambda |-
                       int current = (int)id(light_2_brightness).state;
                       int new_val = current - 26;
                       if (new_val < 0) new_val = 0;
@@ -380,11 +368,9 @@ sensor:
             then:
               - homeassistant.action:
                   service: light.turn_on
-                  data_template:
+                  data:
                     entity_id: ${light_3}
-                    brightness: '{{ new_brightness }}'
-                  variables:
-                    new_brightness: |-
+                    brightness: !lambda |-
                       int current = (int)id(light_3_brightness).state;
                       int new_val = current - 26;
                       if (new_val < 0) new_val = 0;
@@ -395,11 +381,9 @@ sensor:
             then:
               - homeassistant.action:
                   service: light.turn_on
-                  data_template:
+                  data:
                     entity_id: ${light_4}
-                    brightness: '{{ new_brightness }}'
-                  variables:
-                    new_brightness: |-
+                    brightness: !lambda |-
                       int current = (int)id(light_4_brightness).state;
                       int new_val = current - 26;
                       if (new_val < 0) new_val = 0;
@@ -594,11 +578,9 @@ binary_sensor:
           then:
             - homeassistant.action:
                 service: light.turn_on
-                data_template:
+                data:
                   entity_id: ${light_1}
-                  rgb_color: '{{ my_color }}'
-                variables:
-                  my_color: |-
+                  rgb_color: !lambda |-
                     char buf[32];
                     sprintf(buf, "[%d,%d,%d]", id(rgb_red), id(rgb_green), id(rgb_blue));
                     return std::string(buf);
@@ -608,11 +590,9 @@ binary_sensor:
           then:
             - homeassistant.action:
                 service: light.turn_on
-                data_template:
+                data:
                   entity_id: ${light_2}
-                  rgb_color: '{{ my_color }}'
-                variables:
-                  my_color: |-
+                  rgb_color: !lambda |-
                     char buf[32];
                     sprintf(buf, "[%d,%d,%d]", id(rgb_red), id(rgb_green), id(rgb_blue));
                     return std::string(buf);
@@ -622,11 +602,9 @@ binary_sensor:
           then:
             - homeassistant.action:
                 service: light.turn_on
-                data_template:
+                data:
                   entity_id: ${light_3}
-                  rgb_color: '{{ my_color }}'
-                variables:
-                  my_color: |-
+                  rgb_color: !lambda |-
                     char buf[32];
                     sprintf(buf, "[%d,%d,%d]", id(rgb_red), id(rgb_green), id(rgb_blue));
                     return std::string(buf);
@@ -636,11 +614,9 @@ binary_sensor:
           then:
             - homeassistant.action:
                 service: light.turn_on
-                data_template:
+                data:
                   entity_id: ${light_4}
-                  rgb_color: '{{ my_color }}'
-                variables:
-                  my_color: |-
+                  rgb_color: !lambda |-
                     char buf[32];
                     sprintf(buf, "[%d,%d,%d]", id(rgb_red), id(rgb_green), id(rgb_blue));
                     return std::string(buf);
@@ -649,6 +625,53 @@ binary_sensor:
           if (id(control_mode) == 2) {
             id(control_mode) = 1;  // Return to brightness mode
           }
+
+  # Touchscreen - Light ON/OFF toggle (when in brightness mode, top-right)
+  - platform: touchscreen
+    name: "Light Toggle Button"
+    internal: true
+    x_min: 170
+    x_max: 240
+    y_min: 0
+    y_max: 70
+    on_press:
+      # Toggle light 1
+      - if:
+          condition:
+            lambda: 'return id(control_mode) == 1 && id(selected_device) == 1;'
+          then:
+            - homeassistant.action:
+                service: light.toggle
+                data:
+                  entity_id: ${light_1}
+      # Toggle light 2
+      - if:
+          condition:
+            lambda: 'return id(control_mode) == 1 && id(selected_device) == 2;'
+          then:
+            - homeassistant.action:
+                service: light.toggle
+                data:
+                  entity_id: ${light_2}
+      # Toggle light 3
+      - if:
+          condition:
+            lambda: 'return id(control_mode) == 1 && id(selected_device) == 3;'
+          then:
+            - homeassistant.action:
+                service: light.toggle
+                data:
+                  entity_id: ${light_3}
+      # Toggle light 4
+      - if:
+          condition:
+            lambda: 'return id(control_mode) == 1 && id(selected_device) == 4;'
+          then:
+            - homeassistant.action:
+                service: light.toggle
+                data:
+                  entity_id: ${light_4}
+      - rtttl.play: ${menu_sound}
 
   # Touchscreen - Switch RGB channel (bottom center, when in color picker)
   - platform: touchscreen
@@ -956,6 +979,9 @@ display:
             }
 
             it.print(40, 25, id(font_small), id(color_accent), TextAlign::CENTER, "COLOR");
+
+            // ON/OFF toggle button label in top-right
+            it.print(200, 25, id(font_small), id(color_accent), TextAlign::CENTER, "ON/OFF");
 
             // Curved instruction text along bottom arc
             const char* instructions = "Turn to adjust";
