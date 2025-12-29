@@ -42,12 +42,6 @@ esp32:
   framework:
     type: arduino
 
-# Use external GC9A01 component for better display support
-external_components:
-  - source: github://esphome/esphome@dev
-    components: [ gc9a01 ]
-    refresh: 1d
-
 # Enable logging
 logger:
   level: INFO
@@ -502,20 +496,16 @@ font:
 ###################
 
 display:
-  - platform: gc9a01
+  - platform: ili9xxx
+    model: GC9A01A
     id: dial_display
     cs_pin: GPIO7
     dc_pin: GPIO4
     reset_pin: GPIO8
+    invert_colors: false
     update_interval: 200ms
     rotation: 0
     lambda: |-
-      // Fill with white to test display
-      it.fill(Color(255, 255, 255));
-
-      // Draw a red rectangle to verify display is working
-      it.filled_rectangle(50, 50, 140, 140, Color(255, 0, 0));
-
       //===========================================
       // WIFI SETUP MODE DISPLAY
       //===========================================
