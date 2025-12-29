@@ -144,6 +144,7 @@ light:
 
 rtttl:
   output: buzzer
+  gain: 0.05
 
 ###################
 # GLOBALS
