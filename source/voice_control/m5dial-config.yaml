@@ -42,6 +42,12 @@ esp32:
   framework:
     type: arduino
 
+# Use external GC9A01 component for better display support
+external_components:
+  - source: github://pr#7318
+    components: [ gc9a01 ]
+    refresh: 1d
+
 # Enable logging
 logger:
   level: INFO
@@ -496,13 +502,11 @@ font:
 ###################
 
 display:
-  - platform: ili9xxx
-    model: GC9A01A
+  - platform: gc9a01
     id: dial_display
     cs_pin: GPIO7
     dc_pin: GPIO4
     reset_pin: GPIO8
-    invert_colors: false
     update_interval: 200ms
     rotation: 0
     lambda: |-
