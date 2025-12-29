@@ -107,7 +107,6 @@ i2c:
 spi:
   clk_pin: GPIO6
   mosi_pin: GPIO5
-  miso_pin: GPIO4
 
 ###################
 # GLOBAL VARIABLES
