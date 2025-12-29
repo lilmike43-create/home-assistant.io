@@ -108,6 +108,12 @@ spi:
   clk_pin: GPIO6
   mosi_pin: GPIO5
 
+# Backlight control for display
+output:
+  - platform: ledc
+    pin: GPIO46
+    id: backlight_pwm
+
 ###################
 # GLOBAL VARIABLES
 ###################
@@ -440,10 +446,19 @@ touchscreen:
           }
 
 ###################
-# RGB LED
+# LIGHTS
 ###################
 
 light:
+  # Display backlight
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Display Backlight"
+    id: display_backlight
+    restore_mode: ALWAYS_ON
+    default_transition_length: 0s
+
+  # RGB LED for status
   - platform: esp32_rmt_led_strip
     id: dial_light
     name: "Dial LED"
@@ -502,7 +517,7 @@ display:
     cs_pin: GPIO7
     dc_pin: GPIO4
     reset_pin: GPIO8
-    invert_colors: false
+    invert_colors: true
     update_interval: 200ms
     rotation: 0
     lambda: |-
