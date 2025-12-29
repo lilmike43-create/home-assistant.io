@@ -504,25 +504,31 @@ display:
             // Light Control
             it.print(120, 40, id(font_title), id(color_primary), TextAlign::TOP_CENTER, "Light");
 
-            // State
-            std::string state_text = (id(light_state).state == "on") ? "ON" : "OFF";
-            auto state_color = (id(light_state).state == "on") ? id(color_on) : id(color_off);
-            it.print(120, 75, id(font_medium), state_color, TextAlign::TOP_CENTER, state_text.c_str());
-
-            // Brightness circle
-            float brightness_pct = (id(light_brightness).state / 255.0) * 100.0;
-            int arc_degrees = (int)(brightness_pct * 3.6);
-
-            // Draw arc showing brightness level
-            for (int angle = 0; angle < arc_degrees; angle++) {
-              float rad = (angle - 90) * 0.01745329;
-              int x = 120 + (int)(60 * cos(rad));
-              int y = 140 + (int)(60 * sin(rad));
-              it.filled_circle(x, y, 3, id(color_primary));
+            // State - check if loaded
+            if (id(light_state).has_state()) {
+              std::string state_text = (id(light_state).state == "on") ? "ON" : "OFF";
+              auto state_color = (id(light_state).state == "on") ? id(color_on) : id(color_off);
+              it.print(120, 75, id(font_medium), state_color, TextAlign::TOP_CENTER, state_text.c_str());
+            } else {
+              it.print(120, 75, id(font_medium), id(color_secondary), TextAlign::TOP_CENTER, "Loading...");
             }
 
-            // Brightness percentage
-            it.printf(120, 140, id(font_large), id(color_secondary), TextAlign::CENTER, "%.0f%%", brightness_pct);
+            // Brightness circle - check if loaded
+            if (!isnan(id(light_brightness).state)) {
+              float brightness_pct = (id(light_brightness).state / 255.0) * 100.0;
+              int arc_degrees = (int)(brightness_pct * 3.6);
+
+              // Draw arc showing brightness level
+              for (int angle = 0; angle < arc_degrees; angle++) {
+                float rad = (angle - 90) * 0.01745329;
+                int x = 120 + (int)(60 * cos(rad));
+                int y = 140 + (int)(60 * sin(rad));
+                it.filled_circle(x, y, 3, id(color_primary));
+              }
+
+              // Brightness percentage
+              it.printf(120, 140, id(font_large), id(color_secondary), TextAlign::CENTER, "%.0f%%", brightness_pct);
+            }
 
             it.print(120, 200, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Turn to adjust");
           }
@@ -530,26 +536,32 @@ display:
             // Media Player Control
             it.print(120, 40, id(font_title), id(color_primary), TextAlign::TOP_CENTER, "Media");
 
-            // State
-            std::string state_text = (id(media_state).state == "playing") ? "PLAYING" :
-                                    (id(media_state).state == "paused") ? "PAUSED" : "OFF";
-            auto state_color = (id(media_state).state == "playing") ? id(color_on) : id(color_off);
-            it.print(120, 75, id(font_medium), state_color, TextAlign::TOP_CENTER, state_text.c_str());
-
-            // Volume circle
-            float volume_pct = id(media_volume).state * 100.0;
-            int arc_degrees = (int)(volume_pct * 3.6);
-
-            // Draw arc showing volume level
-            for (int angle = 0; angle < arc_degrees; angle++) {
-              float rad = (angle - 90) * 0.01745329;
-              int x = 120 + (int)(60 * cos(rad));
-              int y = 140 + (int)(60 * sin(rad));
-              it.filled_circle(x, y, 3, id(color_primary));
+            // State - check if loaded
+            if (id(media_state).has_state()) {
+              std::string state_text = (id(media_state).state == "playing") ? "PLAYING" :
+                                      (id(media_state).state == "paused") ? "PAUSED" : "OFF";
+              auto state_color = (id(media_state).state == "playing") ? id(color_on) : id(color_off);
+              it.print(120, 75, id(font_medium), state_color, TextAlign::TOP_CENTER, state_text.c_str());
+            } else {
+              it.print(120, 75, id(font_medium), id(color_secondary), TextAlign::TOP_CENTER, "Loading...");
             }
 
-            // Volume percentage
-            it.printf(120, 140, id(font_large), id(color_secondary), TextAlign::CENTER, "%.0f%%", volume_pct);
+            // Volume circle - check if loaded
+            if (!isnan(id(media_volume).state)) {
+              float volume_pct = id(media_volume).state * 100.0;
+              int arc_degrees = (int)(volume_pct * 3.6);
+
+              // Draw arc showing volume level
+              for (int angle = 0; angle < arc_degrees; angle++) {
+                float rad = (angle - 90) * 0.01745329;
+                int x = 120 + (int)(60 * cos(rad));
+                int y = 140 + (int)(60 * sin(rad));
+                it.filled_circle(x, y, 3, id(color_primary));
+              }
+
+              // Volume percentage
+              it.printf(120, 140, id(font_large), id(color_secondary), TextAlign::CENTER, "%.0f%%", volume_pct);
+            }
 
             it.print(120, 200, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Turn to adjust volume");
           }
@@ -557,28 +569,34 @@ display:
             // Climate Control
             it.print(120, 40, id(font_title), id(color_primary), TextAlign::TOP_CENTER, "Climate");
 
-            // State
-            std::string state_text = (id(climate_state).state == "heat") ? "HEATING" :
-                                    (id(climate_state).state == "cool") ? "COOLING" : "OFF";
-            auto state_color = (id(climate_state).state == "off") ? id(color_off) : id(color_on);
-            it.print(120, 75, id(font_medium), state_color, TextAlign::TOP_CENTER, state_text.c_str());
-
-            // Temperature circle
-            float temp = id(climate_temperature).state;
-            int arc_degrees = (int)((temp - 15) * 12);  // 15°C = 0°, 45°C = 360°
-            if (arc_degrees < 0) arc_degrees = 0;
-            if (arc_degrees > 360) arc_degrees = 360;
-
-            // Draw arc showing temperature
-            for (int angle = 0; angle < arc_degrees; angle++) {
-              float rad = (angle - 90) * 0.01745329;
-              int x = 120 + (int)(60 * cos(rad));
-              int y = 140 + (int)(60 * sin(rad));
-              it.filled_circle(x, y, 3, id(color_primary));
+            // State - check if loaded
+            if (id(climate_state).has_state()) {
+              std::string state_text = (id(climate_state).state == "heat") ? "HEATING" :
+                                      (id(climate_state).state == "cool") ? "COOLING" : "OFF";
+              auto state_color = (id(climate_state).state == "off") ? id(color_off) : id(color_on);
+              it.print(120, 75, id(font_medium), state_color, TextAlign::TOP_CENTER, state_text.c_str());
+            } else {
+              it.print(120, 75, id(font_medium), id(color_secondary), TextAlign::TOP_CENTER, "Loading...");
             }
 
-            // Temperature value
-            it.printf(120, 140, id(font_large), id(color_secondary), TextAlign::CENTER, "%.1f C", temp);
+            // Temperature circle - check if loaded
+            if (!isnan(id(climate_temperature).state)) {
+              float temp = id(climate_temperature).state;
+              int arc_degrees = (int)((temp - 15) * 12);  // 15°C = 0°, 45°C = 360°
+              if (arc_degrees < 0) arc_degrees = 0;
+              if (arc_degrees > 360) arc_degrees = 360;
+
+              // Draw arc showing temperature
+              for (int angle = 0; angle < arc_degrees; angle++) {
+                float rad = (angle - 90) * 0.01745329;
+                int x = 120 + (int)(60 * cos(rad));
+                int y = 140 + (int)(60 * sin(rad));
+                it.filled_circle(x, y, 3, id(color_primary));
+              }
+
+              // Temperature value
+              it.printf(120, 140, id(font_large), id(color_secondary), TextAlign::CENTER, "%.1f C", temp);
+            }
 
             it.print(120, 200, id(font_small), id(color_secondary), TextAlign::TOP_CENTER, "Turn to adjust temp");
           }
