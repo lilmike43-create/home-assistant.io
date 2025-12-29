@@ -521,9 +521,9 @@ display:
 
         if (!id(wifi_connected).state) {
           // Not connected - show setup instructions
-          it.print(120, 55, id(font_small), COLOR_WHITE, TextAlign::CENTER, "1. Connect to WiFi:");
+          it.print(120, 55, id(font_small), COLOR_WHITE, TextAlign::CENTER, "1. Connect to WiFi");
           it.print(120, 75, id(font_medium), Color(255, 255, 0), TextAlign::CENTER, "M5Dial Setup");
-          it.print(120, 95, id(font_tiny), Color(150, 150, 150), TextAlign::CENTER, "Password: m5dial123");
+          it.print(120, 95, id(font_tiny), Color(150, 150, 150), TextAlign::CENTER, "Pass: m5dial123");
 
           it.print(120, 120, id(font_small), COLOR_WHITE, TextAlign::CENTER, "2. Open browser");
           it.print(120, 138, id(font_small), COLOR_WHITE, TextAlign::CENTER, "3. Configure WiFi");
